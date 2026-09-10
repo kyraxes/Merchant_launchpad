@@ -133,6 +133,12 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .upload-box.has-photo { border-style: solid; border-color: #bee1d4; background: #f1faf6; }
 .upload-box.has-photo > span { color: var(--green); background: #dff3eb; }
 .save-button { width: 100%; min-height: 49px; border: 0; border-radius: 12px; color: #fff; background: var(--green); display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; font-weight: 850; box-shadow: 0 9px 22px rgba(20,125,100,.19); }
+.save-button:disabled { cursor: wait; opacity: .82; }
+.save-button.saved { background: #06a94d; animation: saveHeartbeat .42s ease-out; }
+.save-button.error { background: #b84444; }
+.save-button.saving .save-button-icon { animation: saveSpin .8s linear infinite; }
+@keyframes saveHeartbeat { 50% { transform: scale(1.018); box-shadow: 0 0 0 7px rgba(6,169,77,.12); } }
+@keyframes saveSpin { to { transform: rotate(360deg); } }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
 .test-data-toolbar { margin-bottom: 10px; padding: 15px; display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; border: 1px solid #dfe8e4; border-radius: 15px; background: #eef7f3; }
 .test-data-toolbar strong { font-size: 10px; letter-spacing: .09em; }
@@ -141,6 +147,21 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .test-downloads a { padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--muted); font-size: 8px; font-weight: 800; }
 .form-notice { margin: 0 0 12px; padding: 10px 12px; border-radius: 9px; color: var(--green-dark); background: var(--green-soft); font-size: 10px; font-weight: 800; }
 .reset-button { width: 100%; margin-top: 8px; padding: 8px; border: 0; color: #8b9490; background: transparent; font-size: 9px; }
+.action-toast { position: fixed; z-index: 50; left: 50%; bottom: 94px; width: min(360px, calc(100% - 28px)); min-height: 50px; padding: 11px 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; border-radius: 14px; color: #fff; background: #25322d; box-shadow: 0 16px 40px rgba(17,29,24,.24); font-size: 11px; font-weight: 800; animation: toastIn .2s ease-out; }
+.action-toast > span { width: 25px; height: 25px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(255,255,255,.16); }
+.action-toast.saved { background: #087e42; }
+.action-toast.error { background: #a43838; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } }
+.export-modal-backdrop { position: fixed; z-index: 60; inset: 0; padding: 20px; display: grid; place-items: center; background: rgba(18,29,25,.52); backdrop-filter: blur(7px); }
+.export-modal { width: min(590px, 100%); max-height: calc(100vh - 40px); padding: 22px; overflow: auto; border-radius: 20px; background: #fff; box-shadow: 0 25px 70px rgba(0,0,0,.25); animation: modalIn .2s ease-out; }
+@keyframes modalIn { from { opacity: 0; transform: scale(.97) translateY(8px); } }
+.export-modal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+.export-modal-heading .eyebrow { margin-bottom: 3px; }
+.export-modal-heading h2 { margin: 0; font-size: 23px; }
+.export-modal-heading > button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: #f0f3f1; font-size: 21px; line-height: 1; }
+.export-modal > p { margin: 11px 0; color: var(--muted); font-size: 10px; }
+.export-modal textarea { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: #f7f9f8; font: 10px/1.45 Consolas, monospace; resize: vertical; }
+.export-actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; }
 .module-heading { padding: 31px 0 24px; position: relative; }
 .module-big-icon { width: 58px; height: 58px; margin-bottom: 19px; display: grid; place-items: center; border-radius: 18px; }
 .google-heading .module-big-icon { color: var(--blue); background: var(--blue-soft); }
@@ -288,6 +309,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
   .launch-copy h1 { font-size: 43px; }
   .test-data-toolbar { grid-template-columns: 1fr 1fr; }
   .test-data-toolbar > div { grid-column: 1 / -1; }
+  .export-actions > button { flex: 1 1 100%; }
   .line-status-card { grid-template-columns: auto 1fr; }
   .line-status-card > a { grid-column: 1 / -1; text-align: center; }
   .app-brand small, .demo-pill { display: none; }
