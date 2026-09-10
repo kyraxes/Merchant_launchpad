@@ -1,4 +1,10 @@
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+const deployedSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.URL ||
+  process.env.DEPLOY_PRIME_URL ||
+  "http://localhost:3000";
+
+export const siteUrl = deployedSiteUrl.replace(/\/$/, "");
 export const mockMode = process.env.NEXT_PUBLIC_MOCK_MODE !== "false";
 
 export function merchantUrl(locale: string, slug: string) {
