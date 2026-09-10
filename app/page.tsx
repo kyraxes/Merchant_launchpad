@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { RootEntry } from "@/components/RootEntry";
 
 export default function Home() {
-  redirect("/th");
+  return <RootEntry />;
 }

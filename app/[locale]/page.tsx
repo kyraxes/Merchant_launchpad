@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Icon } from "@/components/Icon";
+import { LineStatusCard } from "@/components/LineStatusCard";
 import { merchants } from "@/data/merchants";
 import { copy, isLocale, locales } from "@/lib/i18n";
 
@@ -78,6 +79,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     <>
       <Header locale={locale} />
       <main className="app-main dashboard-main">
+        <LineStatusCard locale={locale} />
         <section className="welcome-card">
           <div>
             <p className="eyebrow">{t.hello}，{merchant.name[locale]}</p>
