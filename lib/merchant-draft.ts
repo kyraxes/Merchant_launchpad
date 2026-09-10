@@ -87,7 +87,7 @@ export function createEmptyMerchantDraft(id: string, locale: Locale): MerchantDr
     id,
     slug: `mock-store-${id.slice(-6).toLowerCase()}`,
     status: "draft",
-    name: { ...blank, [locale]: locale === "th" ? "ร้านใหม่" : locale === "zh" ? "新店铺" : "New store" },
+    name: blank,
     category,
     address: blank,
     area: blank,

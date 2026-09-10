@@ -12,7 +12,6 @@ import {
   type MerchantWorkflowStatus,
   type MerchantWorkspace,
 } from "@/lib/merchant-draft";
-import type { Locale } from "@/lib/types";
 
 const legacyStorageKey = "merchant-launchpad-draft-v1";
 const databaseName = "merchant-launchpad";
@@ -67,7 +66,17 @@ function normalizeWorkspace(value: unknown): MerchantWorkspace | null {
   if (!value || typeof value !== "object") return null;
   const source = value as Partial<MerchantWorkspace>;
   if (!Array.isArray(source.merchants) || !source.merchants.length) return null;
-  const normalized = source.merchants.map((item, index) => normalizeMerchantDraft(item, seedDrafts[index] || seedDrafts[0]));
+  const normalized = source.merchants
+    .map((item, index) => normalizeMerchantDraft(item, seedDrafts[index] || seedDrafts[0]))
+    .filter((item) => !(
+      item.id.startsWith("merchant-")
+      && item.status === "draft"
+      && ["新店铺", "ร้านใหม่", "New store"].includes(item.name.zh || item.name.th || item.name.en)
+      && !item.address.zh && !item.address.th && !item.address.en
+      && !item.phone && !item.hours
+      && !item.images.storefront && !item.images.menu && !item.images.product
+    ));
+  if (!normalized.length) return seedWorkspace;
   const selectedId = normalized.some((item) => item.id === source.selectedId) ? String(source.selectedId) : normalized[0].id;
   return { version: 2, selectedId, merchants: normalized, events: Array.isArray(source.events) ? source.events : [] };
 }
@@ -84,7 +93,7 @@ type MerchantDraftContextValue = {
   setFailNextRequest: (value: boolean) => void;
   saveDraft: (next: MerchantDraft) => Promise<void>;
   resetDraft: () => Promise<void>;
-  createMerchant: (locale: Locale) => Promise<string>;
+  submitMerchant: (next: MerchantDraft) => Promise<string>;
   selectMerchant: (id: string) => Promise<void>;
   setMerchantStatus: (id: string, status: MerchantWorkflowStatus) => Promise<void>;
   deleteMerchant: (id: string) => Promise<void>;
@@ -117,9 +126,9 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
             const migrated = normalizeMerchantDraft(legacy, seedDrafts[0]);
             loaded = { ...seedWorkspace, selectedId: migrated.id, merchants: [migrated, ...seedDrafts.slice(1)] };
           } else loaded = seedWorkspace;
-          await writeRecord(workspaceKey, loaded);
           window.localStorage.removeItem(legacyStorageKey);
         }
+        await writeRecord(workspaceKey, loaded);
         if (active) updateWorkspace(loaded);
       } catch {
         if (active) updateWorkspace(seedWorkspace);
@@ -165,10 +174,22 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const fallback = seedDrafts.find((item) => item.id === selected.id) || createEmptyMerchantDraft(selected.id, "th");
       return { ...current, merchants: current.merchants.map((item) => item.id === selected.id ? fallback : item) };
     }),
-    createMerchant: async (locale) => {
+    submitMerchant: async (draft) => {
       const id = makeId("merchant");
-      const created = createEmptyMerchantDraft(id, locale);
-      await commit((current) => ({ ...current, selectedId: id, merchants: [created, ...current.merchants], events: [addEvent(id, "created"), ...current.events].slice(0, 100) }));
+      const submitted = {
+        ...normalizeMerchantDraft(draft, createEmptyMerchantDraft(id, "th")),
+        id,
+        slug: `mock-store-${id.slice(-6).toLowerCase()}`,
+        status: "review" as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await commit((current) => ({
+        ...current,
+        selectedId: id,
+        merchants: [submitted, ...current.merchants],
+        events: [addEvent(id, "submitted"), addEvent(id, "created"), ...current.events].slice(0, 100),
+      }));
       return id;
     },
     selectMerchant: async (id) => commit((current) => current.merchants.some((item) => item.id === id) ? { ...current, selectedId: id, events: [addEvent(id, "selected"), ...current.events].slice(0, 100) } : current),

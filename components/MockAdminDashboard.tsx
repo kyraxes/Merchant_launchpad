@@ -10,7 +10,7 @@ const eventLabel = { created: "创建店铺", saved: "保存资料", submitted: 
 
 export function MockAdminDashboard() {
   const router = useRouter();
-  const { merchants, events, draft, hydrated, failNextRequest, setFailNextRequest, createMerchant, selectMerchant, setMerchantStatus, deleteMerchant } = useMerchantDraft();
+  const { merchants, events, draft, hydrated, failNextRequest, setFailNextRequest, selectMerchant, setMerchantStatus, deleteMerchant } = useMerchantDraft();
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
 
@@ -23,22 +23,10 @@ export function MockAdminDashboard() {
     await run(id, () => setMerchantStatus(id, status), `状态已更新为“${statusLabel[status]}”`);
   }
 
-  async function createTestMerchant() {
-    setBusy("create"); setMessage("");
-    try {
-      await createMerchant("zh");
-      router.push("/zh/onboarding");
-    } catch {
-      setMessage("模拟请求失败：没有创建新的测试商户");
-    } finally {
-      setBusy("");
-    }
-  }
-
   if (!hydrated) return <main className="admin-shell"><p>正在加载 Mock 数据…</p></main>;
   return (
     <main className="admin-shell">
-      <header className="admin-heading"><div><p className="eyebrow">LOCAL MOCK OPERATIONS</p><h1>商户管理台</h1><p>所有数据只存在当前设备，用于验证运营流程，不是正式后台。</p></div><div><button className="secondary-button" type="button" onClick={() => router.push("/zh")}>返回商户端</button><button className="primary-button" type="button" disabled={busy === "create"} onClick={() => void createTestMerchant()}>{busy === "create" ? "正在创建…" : "创建测试商户"}</button></div></header>
+      <header className="admin-heading"><div><p className="eyebrow">LOCAL MOCK OPERATIONS</p><h1>商户管理台</h1><p>这里只显示已经提交的商户；未完成的建档不会进入列表。</p></div><div><button className="secondary-button" type="button" onClick={() => router.push("/zh")}>返回商户端</button></div></header>
       <section className="admin-stats"><article><strong>{merchants.length}</strong><span>全部商户</span></article><article><strong>{merchants.filter((item) => item.status === "review").length}</strong><span>等待审核</span></article><article><strong>{merchants.filter((item) => item.status === "published").length}</strong><span>已发布</span></article><article><strong>{events.length}</strong><span>操作事件</span></article></section>
       <section className="mock-control-card"><div><strong>异常场景测试</strong><p>开启后，下一次保存、切换或状态修改会等待约 0.4 秒后失败。</p></div><label><input type="checkbox" checked={failNextRequest} onChange={(event) => setFailNextRequest(event.target.checked)}/><span>{failNextRequest ? "下一次请求将失败" : "下一次请求正常"}</span></label></section>
       {message && <p className="admin-message" role="status">{message}</p>}
