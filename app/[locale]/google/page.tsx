@@ -5,7 +5,8 @@ import { Header } from "@/components/Header";
 import { Icon } from "@/components/Icon";
 import { merchants } from "@/data/merchants";
 import { isLocale, locales } from "@/lib/i18n";
-import { googleMapsSearchUrl } from "@/lib/site";
+import { MerchantSnapshot } from "@/components/MerchantSnapshot";
+import { GoogleDraftSearchLink } from "@/components/GoogleDraftSearchLink";
 
 const ui = {
   th: { kicker: "GOOGLE MAPS", title: "นำร้านขึ้น Google Maps", body: "เราเตรียมข้อมูลและบอกขั้นตอนต่อไป การเข้าสู่ระบบและยืนยันต้องทำโดยเจ้าของร้าน", status: "รอการยืนยันจากเจ้าของร้าน", ready: "ข้อมูลพร้อมส่ง", step1: "ค้นหาร้านเดิม", step1body: "ตรวจว่ามีโปรไฟล์ของร้านนี้อยู่แล้วหรือไม่", step2: "ตรวจข้อมูลร้าน", step2body: "ชื่อ หมวดหมู่ ที่อยู่ โทรศัพท์ เวลาเปิด และรูปภาพพร้อมแล้ว", step3: "เข้าสู่ระบบและยืนยัน", step3body: "Google จะเป็นผู้กำหนดวิธียืนยัน เจ้าของร้านต้องดำเนินการเอง", search: "ค้นหาใน Google Maps", review: "ดูข้อมูลที่จะส่ง", note: "เราไม่สามารถรับประกันอันดับหรือข้ามขั้นตอนยืนยันของ Google ได้", profile: "แก้ไขข้อมูลร้าน" },
@@ -20,7 +21,6 @@ export default async function GooglePage({ params }: { params: Promise<{ locale:
   if (!isLocale(locale)) notFound();
   const merchant = merchants[0];
   const t = ui[locale];
-  const mapUrl = googleMapsSearchUrl(merchant.name.en, merchant.coordinates.lat, merchant.coordinates.lng);
   return <>
     <Header locale={locale}/>
     <main className="app-main module-main">
@@ -29,13 +29,9 @@ export default async function GooglePage({ params }: { params: Promise<{ locale:
         <p className="eyebrow">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p>
         <span className="module-status waiting"><span/> {t.status}</span>
       </section>
-      <section className="merchant-snapshot">
-        <span className="snapshot-art">{merchant.emoji}</span>
-        <div><strong>{merchant.name[locale]}</strong><p>{merchant.category[locale]} · {merchant.area[locale]}</p></div>
-        <span className="ready-label"><Icon name="check" size={15}/>{t.ready}</span>
-      </section>
+      <MerchantSnapshot locale={locale} fallbackEmoji={merchant.emoji} />
       <section className="step-list">
-        <article className="step-card complete"><span className="step-number"><Icon name="check"/></span><div><h2>{t.step1}</h2><p>{t.step1body}</p><a href={mapUrl} target="_blank" rel="noreferrer">{t.search}<Icon name="external" size={15}/></a></div></article>
+        <article className="step-card complete"><span className="step-number"><Icon name="check"/></span><div><h2>{t.step1}</h2><p>{t.step1body}</p><GoogleDraftSearchLink locale={locale} label={t.search} /></div></article>
         <article className="step-card complete"><span className="step-number"><Icon name="check"/></span><div><h2>{t.step2}</h2><p>{t.step2body}</p><Link href={`/${locale}/profile`}>{t.review}<Icon name="arrow" size={15}/></Link></div></article>
         <article className="step-card current"><span className="step-number">3</span><div><h2>{t.step3}</h2><p>{t.step3body}</p><button type="button" className="primary-button">Google Sign in · Mock</button></div></article>
       </section>

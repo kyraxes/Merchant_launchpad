@@ -13,7 +13,7 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
           <span><strong>{t.brand}</strong><small>LINE MINI App · Mock V1</small></span>
         </Link>
         <div className="header-actions">
-          <span className="demo-pill">DEMO</span>
+          <Link className="demo-pill" href="/launch">LINE</Link>
           <span className="language-switcher">
             <Link className={locale === "zh" ? "active" : ""} href="/zh">中</Link>
             <Link className={locale === "th" ? "active" : ""} href="/th">ไทย</Link>

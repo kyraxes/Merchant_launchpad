@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Icon } from "@/components/Icon";
 import { LineStatusCard } from "@/components/LineStatusCard";
-import { merchants } from "@/data/merchants";
+import { MerchantWelcome } from "@/components/MerchantWelcome";
 import { copy, isLocale, locales } from "@/lib/i18n";
 
 const ui = {
@@ -72,7 +72,6 @@ export function generateStaticParams() { return locales.map((locale) => ({ local
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const merchant = merchants[0];
   const t = ui[locale];
   const common = copy[locale];
   return (
@@ -80,18 +79,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       <Header locale={locale} />
       <main className="app-main dashboard-main">
         <LineStatusCard locale={locale} />
-        <section className="welcome-card">
-          <div>
-            <p className="eyebrow">{t.hello}，{merchant.name[locale]}</p>
-            <h1>{t.title}</h1>
-            <p>{t.subtitle}</p>
-          </div>
-          <div className="profile-progress-card">
-            <div className="progress-ring" style={{ "--progress": `${merchant.profileCompletion * 3.6}deg` } as React.CSSProperties}><span>{merchant.profileCompletion}%</span></div>
-            <div><strong>{t.complete}</strong><small>{merchant.category[locale]} · {merchant.area[locale]}</small></div>
-            <Link href={`/${locale}/profile`}>{t.improve} <Icon name="arrow" size={16}/></Link>
-          </div>
-        </section>
+        <MerchantWelcome locale={locale} />
 
         <section className="tool-section">
           <div className="section-title"><div><p className="eyebrow">V1</p><h2>{t.tools}</h2></div><span>3</span></div>

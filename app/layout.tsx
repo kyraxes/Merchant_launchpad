@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { mockMode, siteUrl } from "@/lib/site";
 import { LiffProvider } from "@/components/LiffProvider";
+import { MerchantDraftProvider } from "@/components/MerchantDraftProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body><LiffProvider>{children}</LiffProvider></body>
+      <body><LiffProvider><MerchantDraftProvider>{children}</MerchantDraftProvider></LiffProvider></body>
     </html>
   );
 }

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "name": {
+    "th": "ครัวบ้านกระเจา",
+    "en": "Baan Krachao Kitchen",
+    "zh": "班甲昭泰式厨房"
+  },
+  "category": {
+    "th": "ร้านอาหารไทย",
+    "en": "Thai restaurant",
+    "zh": "泰国餐厅"
+  },
+  "address": {
+    "th": "88 ถนนสุขุมวิท เขตวัฒนา กรุงเทพฯ 10110",
+    "en": "88 Sukhumvit Road, Watthana, Bangkok 10110",
+    "zh": "曼谷瓦他那区素坤逸路88号"
+  },
+  "phone": "+66 2 000 0101",
+  "lineId": "@baankrachao",
+  "hours": "10:30–21:00",
+  "images": {
+    "storefront": "/test-data/mock-storefront.png",
+    "menu": "/test-data/mock-menu.png",
+    "product": "/test-data/mock-product.png"
+  },
+  "updatedAt": null
+}
