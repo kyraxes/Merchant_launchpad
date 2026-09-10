@@ -5,34 +5,13 @@ import type { Locale } from "@/lib/types";
 import { normalizeMerchantDraft, type DraftImageKind, type MerchantDraft } from "@/lib/merchant-draft";
 import { useMerchantDraft } from "@/components/MerchantDraftProvider";
 import { Icon } from "@/components/Icon";
+import { compressImage } from "@/lib/browser-image";
 
 const ui = {
   th: { title: "ข้อมูลร้าน", body: "กรอกครั้งเดียว เราจะนำข้อมูลไปใช้กับ Google เว็บไซต์ และโปสเตอร์", basic: "ข้อมูลพื้นฐาน", name: "ชื่อร้าน", category: "ประเภทร้าน", phone: "เบอร์โทร", line: "LINE สำหรับติดต่อ (ไม่บังคับ)", address: "ที่อยู่", hours: "เวลาเปิด", media: "รูปภาพและเมนู", storefront: "รูปหน้าร้าน", menu: "รูปเมนู", product: "รูปสินค้า", add: "ถ่ายหรือเลือกรูป", replace: "เปลี่ยนรูป", save: "บันทึกข้อมูล", saving: "กำลังบันทึก…", saved: "บันทึกในเครื่องนี้แล้ว", saveError: "บันทึกไม่สำเร็จ กรุณาลองลดจำนวนรูป", helper: "รูปจะถูกย่อและเก็บในเบราว์เซอร์ของเครื่องนี้สำหรับการทดสอบ", import: "นำเข้าไฟล์ทดสอบ JSON", imported: "นำเข้าข้อมูลแล้ว กรุณาตรวจสอบและบันทึก", export: "ส่งออกข้อมูลที่บันทึก", exportTitle: "ข้อมูลร้าน JSON", exportBody: "ไฟล์นี้ไม่รวมรูปภาพ รูปยังเก็บอยู่ในอุปกรณ์นี้", copy: "คัดลอก JSON", copied: "คัดลอกแล้ว", share: "แชร์", download: "ดาวน์โหลดในเบราว์เซอร์", close: "ปิด", reset: "รีเซ็ตข้อมูลทดลอง", invalid: "ไฟล์นี้ไม่ใช่ข้อมูลร้านที่รองรับ" },
   en: { title: "Store profile", body: "Enter it once. We reuse it for Google, your website and posters.", basic: "Basic information", name: "Store name", category: "Business category", phone: "Phone", line: "LINE contact (optional)", address: "Address", hours: "Opening hours", media: "Photos and menu", storefront: "Storefront photo", menu: "Menu photo", product: "Product photo", add: "Take or choose photo", replace: "Replace photo", save: "Save store profile", saving: "Saving…", saved: "Saved on this device", saveError: "Save failed. Try using fewer photos.", helper: "Photos are compressed and stored in this browser for flow testing.", import: "Import test JSON", imported: "Data imported. Review and save it.", export: "Export saved data", exportTitle: "Store data JSON", exportBody: "This export excludes photos. They remain stored on this device.", copy: "Copy JSON", copied: "Copied", share: "Share", download: "Browser download", close: "Close", reset: "Reset mock data", invalid: "This file is not supported merchant data" },
   zh: { title: "店铺资料", body: "只填写一次，Google、店铺网站和海报都会复用。", basic: "基础信息", name: "店铺名称", category: "店铺分类", phone: "联系电话", line: "LINE联系方式（选填）", address: "店铺地址", hours: "营业时间", media: "照片与菜单", storefront: "店招照片", menu: "菜单照片", product: "商品照片", add: "拍照或选择照片", replace: "更换照片", save: "保存店铺资料", saving: "正在保存…", saved: "已保存到当前设备", saveError: "保存失败，请减少照片数量后重试", helper: "图片会压缩并保存在当前浏览器中，仅用于流程测试。", import: "导入测试JSON", imported: "数据已导入，请确认后保存", export: "导出已保存数据", exportTitle: "店铺资料 JSON", exportBody: "导出内容不包含照片；照片仍保存在当前设备中。", copy: "复制JSON", copied: "已复制", share: "系统分享", download: "浏览器下载", close: "关闭", reset: "重置Mock数据", invalid: "这不是可识别的商户数据文件" },
 };
-
-function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Unable to read image"));
-    reader.onload = () => {
-      const image = new Image();
-      image.onerror = () => reject(new Error("Unable to decode image"));
-      image.onload = () => {
-        const maxEdge = 1024;
-        const scale = Math.min(1, maxEdge / Math.max(image.width, image.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(image.width * scale);
-        canvas.height = Math.round(image.height * scale);
-        canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
-      };
-      image.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 export function ProfileForm({ locale }: { locale: Locale }) {
   const t = ui[locale];
@@ -66,7 +45,14 @@ export function ProfileForm({ locale }: { locale: Locale }) {
     if (!file) return;
     try {
       const parsed = JSON.parse(await file.text());
-      setForm(normalizeMerchantDraft(parsed, draft));
+      const imported = normalizeMerchantDraft(parsed, draft);
+      setForm({
+        ...imported,
+        id: draft.id,
+        slug: draft.slug,
+        status: draft.status,
+        createdAt: draft.createdAt,
+      });
       setNotice(t.imported);
     } catch {
       setNotice(t.invalid);

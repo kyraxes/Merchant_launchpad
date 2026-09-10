@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Icon } from "@/components/Icon";
-import { merchants } from "@/data/merchants";
 import { isLocale, locales } from "@/lib/i18n";
 import { WebsiteDraftPreview } from "@/components/WebsiteDraftPreview";
+import { WebsiteWorkflowStatus } from "@/components/WebsiteWorkflowStatus";
 
 const ui = {
   th: { kicker: "STORE WEBSITE", title: "เว็บไซต์ร้านของคุณ", body: "เราสร้างหน้าเว็บสาธารณะจากข้อมูลร้าน เพื่อให้ Google และลูกค้าค้นพบ", published: "เผยแพร่แล้ว", url: "ที่อยู่เว็บไซต์", view: "เปิดเว็บไซต์", edit: "แก้ไขเนื้อหา", content: "เนื้อหาในเว็บไซต์", info: "ข้อมูลร้าน", infoBody: "ชื่อ หมวดหมู่ คำแนะนำ ที่อยู่ เวลาเปิด และเบอร์โทร", menu: "เมนูและราคา", menuBody: "ข้อความที่ Google อ่านได้ ไม่ใช่เพียงรูปเมนู", languages: "3 ภาษา", languagesBody: "ไทย อังกฤษ และจีน มี URL แยกกัน", seo: "พร้อมสำหรับ Google", seoBody: "ชื่อหน้า ข้อมูลโครงสร้าง sitemap และหน้าโหลดเร็ว", publicOnly: "นี่คือฟังก์ชันเดียวใน V1 ที่สร้างหน้าเว็บเพิ่มเติม", next: "ขั้นตอนต่อไป", nextBody: "ตรวจข้อมูลและดูตัวอย่าง เมื่อใช้ข้อมูลร้านจริงแล้วจึงเปิดให้ Google เก็บข้อมูล" },
@@ -18,7 +18,6 @@ export function generateStaticParams() { return locales.map((locale) => ({ local
 export default async function WebsitePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const merchant = merchants[0];
   const t = ui[locale];
   const items = [
     { icon: "store" as const, title: t.info, body: t.infoBody },
@@ -32,9 +31,9 @@ export default async function WebsitePage({ params }: { params: Promise<{ locale
       <section className="module-heading website-heading">
         <span className="module-big-icon"><Icon name="globe" size={31}/></span>
         <p className="eyebrow">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p>
-        <span className="module-status live"><Icon name="check" size={15}/>{t.published}</span>
+        <WebsiteWorkflowStatus locale={locale} />
       </section>
-      <WebsiteDraftPreview locale={locale} merchant={merchant} />
+      <WebsiteDraftPreview locale={locale} />
       <section className="content-section"><div className="section-title"><h2>{t.content}</h2></div><div className="content-grid">{items.map((item) => <article key={item.title}><span><Icon name={item.icon} size={21}/></span><div><h3>{item.title}</h3><p>{item.body}</p></div><Icon name="check" size={18}/></article>)}</div></section>
       <aside className="public-note"><Icon name="globe" size={22}/><div><strong>{t.publicOnly}</strong><p>{t.nextBody}</p></div></aside>
     </main>

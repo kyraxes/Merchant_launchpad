@@ -5,6 +5,8 @@ import { Header } from "@/components/Header";
 import { Icon } from "@/components/Icon";
 import { LineStatusCard } from "@/components/LineStatusCard";
 import { MerchantWelcome } from "@/components/MerchantWelcome";
+import { MerchantSwitcher } from "@/components/MerchantSwitcher";
+import { WebsiteWorkflowStatus } from "@/components/WebsiteWorkflowStatus";
 import { copy, isLocale, locales } from "@/lib/i18n";
 
 const ui = {
@@ -79,6 +81,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       <Header locale={locale} />
       <main className="app-main dashboard-main">
         <LineStatusCard locale={locale} />
+        <MerchantSwitcher locale={locale} />
         <MerchantWelcome locale={locale} />
 
         <section className="tool-section">
@@ -92,7 +95,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             </Link>
             <Link className="tool-card website-tool" href={`/${locale}/website`}>
               <span className="tool-icon"><Icon name="globe" size={27}/></span>
-              <span className="status-chip live"><Icon name="check" size={13}/>{t.webStatus}</span>
+              <WebsiteWorkflowStatus locale={locale} compact />
               <h3>{t.webTitle}</h3><p>{t.webBody}</p>
               <span className="tool-action">{common.edit}<Icon name="arrow" size={17}/></span>
             </Link>

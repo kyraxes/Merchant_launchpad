@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Locale } from "@/lib/types";
 import { useMerchantDraft } from "@/components/MerchantDraftProvider";
 import { Icon } from "@/components/Icon";
+import { localizedValue, profileCompletion } from "@/lib/merchant-draft";
 
 const text = {
   th: { hello: "สวัสดี", title: "เริ่มให้ลูกค้าค้นพบร้านของคุณ", subtitle: "กรอกข้อมูลร้านเพียงครั้งเดียว แล้วใช้กับเครื่องมือทั้ง 3 อย่าง", complete: "ข้อมูลร้านพร้อมใช้งาน", improve: "แก้ไขข้อมูล" },
@@ -14,14 +15,13 @@ const text = {
 export function MerchantWelcome({ locale }: { locale: Locale }) {
   const { draft } = useMerchantDraft();
   const t = text[locale];
-  const values = [draft.name[locale], draft.category[locale], draft.phone, draft.address[locale], draft.hours, draft.images.storefront, draft.images.menu, draft.images.product];
-  const completion = Math.round(values.filter(Boolean).length / values.length * 100);
+  const completion = profileCompletion(draft);
   return (
     <section className="welcome-card">
-      <div><p className="eyebrow">{t.hello}，{draft.name[locale]}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div>
+      <div><p className="eyebrow">{t.hello}，{localizedValue(draft.name, locale)}</p><h1>{t.title}</h1><p>{t.subtitle}</p></div>
       <div className="profile-progress-card">
         <div className="progress-ring" style={{ "--progress": `${completion * 3.6}deg` } as React.CSSProperties}><span>{completion}%</span></div>
-        <div><strong>{t.complete}</strong><small>{draft.category[locale]} · {draft.address[locale]}</small></div>
+        <div><strong>{t.complete}</strong><small>{localizedValue(draft.category, locale)} · {localizedValue(draft.address, locale)}</small></div>
         <Link href={`/${locale}/profile`}>{t.improve} <Icon name="arrow" size={16}/></Link>
       </div>
     </section>

@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
-import type { Locale, Merchant } from "@/lib/types";
+import type { Locale } from "@/lib/types";
 import { Icon } from "@/components/Icon";
 import { useMerchantDraft } from "@/components/MerchantDraftProvider";
+import { localizedValue } from "@/lib/merchant-draft";
 
 type Format = "square" | "story" | "a4";
 type Theme = "sunset" | "forest" | "night";
@@ -48,10 +49,10 @@ function drawCover(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: nu
   ctx.drawImage(image, (image.width - sourceWidth) / 2, (image.height - sourceHeight) / 2, sourceWidth, sourceHeight, x, y, width, height);
 }
 
-export function PosterStudio({ merchant, initialLocale }: { merchant: Merchant; initialLocale: Locale }) {
+export function PosterStudio({ initialLocale }: { initialLocale: Locale }) {
   const { draft } = useMerchantDraft();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const products = merchant.menu.flatMap((section) => section.items);
+  const products = useMemo(() => draft.menu.flatMap((section) => section.items), [draft.menu]);
   const [productId, setProductId] = useState(products[0].id);
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [format, setFormat] = useState<Format>("square");
@@ -74,33 +75,33 @@ export function PosterStudio({ merchant, initialLocale }: { merchant: Merchant; 
       ctx.globalAlpha = .13; ctx.fillStyle = "#fff";
       for (let i=0;i<7;i+=1) { ctx.beginPath(); ctx.arc(spec.width*(.08+i*.15), spec.height*(.08+(i%3)*.18), 85*scale, 0, Math.PI*2); ctx.fill(); }
       ctx.globalAlpha = 1;
-      const pad = 76*scale; ctx.fillStyle = palette.ink; ctx.font = `700 ${28*scale}px Arial`; ctx.fillText(draft.name[locale].toUpperCase(), pad, pad);
+      const pad = 76*scale; ctx.fillStyle = palette.ink; ctx.font = `700 ${28*scale}px Arial`; ctx.fillText(localizedValue(draft.name, locale).toUpperCase(), pad, pad);
       if (draft.images.product) {
         try {
           const itemImage = await loadCanvasImage(draft.images.product); if (cancelled) return;
           const imageSize = 220*scale; const imageY = pad+35*scale;
           ctx.save(); ctx.beginPath(); ctx.roundRect(pad, imageY, imageSize, imageSize, 28*scale); ctx.clip(); drawCover(ctx, itemImage, pad, imageY, imageSize, imageSize); ctx.restore();
-        } catch { ctx.font = `900 ${190*scale}px Arial`; ctx.fillText(merchant.emoji, pad, pad+235*scale); }
-      } else { ctx.font = `900 ${190*scale}px Arial`; ctx.fillText(merchant.emoji, pad, pad+235*scale); }
+        } catch { ctx.font = `900 ${190*scale}px Arial`; ctx.fillText(draft.emoji, pad, pad+235*scale); }
+      } else { ctx.font = `900 ${190*scale}px Arial`; ctx.fillText(draft.emoji, pad, pad+235*scale); }
       const titleSize = fitText(ctx, product.name[locale], spec.width-pad*2, 92*scale, 44*scale); ctx.font = `800 ${titleSize}px Arial`; ctx.fillText(product.name[locale], pad, pad+365*scale);
       ctx.font = `500 ${34*scale}px Arial`; ctx.fillText(product.description[locale], pad, pad+420*scale);
       ctx.font = `900 ${74*scale}px Arial`; ctx.fillText(`฿${product.price}`, pad, pad+515*scale);
       const cardH = Math.min(300*scale, spec.height*.25); const cardY = spec.height-cardH-pad;
       ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.beginPath(); ctx.roundRect(pad, cardY, spec.width-pad*2, cardH, 28*scale); ctx.fill();
-      ctx.fillStyle = "#171717"; ctx.font = `800 ${29*scale}px Arial`; ctx.fillText(qrTarget === "none" ? merchant.tagline[locale] : ui[locale].scan, pad+36*scale, cardY+65*scale);
-      ctx.font = `500 ${24*scale}px Arial`; ctx.fillText(draft.address[locale], pad+36*scale, cardY+112*scale); ctx.fillText(draft.phone, pad+36*scale, cardY+153*scale);
+      ctx.fillStyle = "#171717"; ctx.font = `800 ${29*scale}px Arial`; ctx.fillText(qrTarget === "none" ? localizedValue(draft.tagline, locale) : ui[locale].scan, pad+36*scale, cardY+65*scale);
+      ctx.font = `500 ${24*scale}px Arial`; ctx.fillText(localizedValue(draft.address, locale), pad+36*scale, cardY+112*scale); ctx.fillText(draft.phone, pad+36*scale, cardY+153*scale);
       ctx.font = `600 ${18*scale}px Arial`; ctx.fillText("MOCK V1 · Merchant Launchpad", pad+36*scale, cardY+cardH-35*scale);
       if (qrTarget !== "none") {
         const origin = window.location.origin;
-        const targets = { website: `${origin}/${locale}/stores/${merchant.slug}`, google: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(draft.name.en)}`, line: `https://line.me/R/ti/p/${draft.lineId}` };
+        const targets = { website: `${origin}/${locale}/preview`, google: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(localizedValue(draft.name, locale))}`, line: `https://line.me/R/ti/p/${draft.lineId}` };
         const qrData = await QRCode.toDataURL(targets[qrTarget], { margin: 1, width: 280 }); if (cancelled) return;
         const img = new Image(); img.onload = () => { if (cancelled) return; const size=Math.min(205*scale,cardH-60*scale); ctx.drawImage(img,spec.width-pad-size-32*scale,cardY+30*scale,size,size); setReady(true); }; img.src=qrData;
       } else setReady(true);
     }
     draw(); return () => { cancelled=true; };
-  }, [draft, merchant, product, locale, format, theme, qrTarget]);
+  }, [draft, product, locale, format, theme, qrTarget]);
 
-  function download() { const canvas=canvasRef.current; if(!canvas||!ready)return; const link=document.createElement("a"); link.download=`${merchant.slug}-${product.id}-${format}-${locale}.png`; link.href=canvas.toDataURL("image/png"); link.click(); }
+  function download() { const canvas=canvasRef.current; if(!canvas||!ready)return; const link=document.createElement("a"); link.download=`${draft.slug}-${product.id}-${format}-${locale}.png`; link.href=canvas.toDataURL("image/png"); link.click(); }
 
   return <div className="poster-page">
     <section className="poster-controls">

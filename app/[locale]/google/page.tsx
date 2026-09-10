@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Icon } from "@/components/Icon";
-import { merchants } from "@/data/merchants";
 import { isLocale, locales } from "@/lib/i18n";
 import { MerchantSnapshot } from "@/components/MerchantSnapshot";
 import { GoogleDraftSearchLink } from "@/components/GoogleDraftSearchLink";
@@ -19,7 +18,6 @@ export function generateStaticParams() { return locales.map((locale) => ({ local
 export default async function GooglePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const merchant = merchants[0];
   const t = ui[locale];
   return <>
     <Header locale={locale}/>
@@ -29,7 +27,7 @@ export default async function GooglePage({ params }: { params: Promise<{ locale:
         <p className="eyebrow">{t.kicker}</p><h1>{t.title}</h1><p>{t.body}</p>
         <span className="module-status waiting"><span/> {t.status}</span>
       </section>
-      <MerchantSnapshot locale={locale} fallbackEmoji={merchant.emoji} />
+      <MerchantSnapshot locale={locale} />
       <section className="step-list">
         <article className="step-card complete"><span className="step-number"><Icon name="check"/></span><div><h2>{t.step1}</h2><p>{t.step1body}</p><GoogleDraftSearchLink locale={locale} label={t.search} /></div></article>
         <article className="step-card complete"><span className="step-number"><Icon name="check"/></span><div><h2>{t.step2}</h2><p>{t.step2body}</p><Link href={`/${locale}/profile`}>{t.review}<Icon name="arrow" size={15}/></Link></div></article>
