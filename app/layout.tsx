@@ -7,7 +7,7 @@ import { MerchantDraftProvider } from "@/components/MerchantDraftProvider";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "Thai Merchant Launchpad", template: "%s · Thai Merchant Launchpad" },
-  description: "A LINE MINI App prototype that helps Thai merchants launch on Google Maps, publish a store website and create product posters.",
+  description: "A LINE LIFF App prototype that helps Thai merchants launch on Google Maps, publish a store website and create product posters.",
   robots: mockMode ? { index: false, follow: false } : { index: true, follow: true },
 };
 
