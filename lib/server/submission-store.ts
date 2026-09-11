@@ -91,3 +91,16 @@ export async function updateSubmission(submission: MerchantSubmission) {
   const store = getStore({ name: storeName, consistency: "strong" });
   await store.setJSON(key, submission, { metadata: { status: submission.status, submittedAt: submission.submittedAt } });
 }
+
+export async function deleteSubmission(submission: MerchantSubmission) {
+  const keys = [
+    `${submissionPrefix}${submission.id}`,
+    ...Object.values(submission.imageKeys).filter((key): key is string => Boolean(key)),
+  ];
+  if (useMemoryStore()) {
+    for (const key of keys) memoryStore().delete(key);
+    return;
+  }
+  const store = getStore({ name: storeName, consistency: "strong" });
+  await Promise.all(keys.map((key) => store.delete(key)));
+}

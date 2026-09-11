@@ -112,7 +112,9 @@ type MerchantDraftContextValue = {
   events: MerchantEvent[];
   hydrated: boolean;
   failNextRequest: boolean;
+  syncState: "idle" | "syncing" | "synced" | "error";
   setFailNextRequest: (value: boolean) => void;
+  syncServer: () => Promise<void>;
   saveDraft: (next: MerchantDraft) => Promise<void>;
   resetDraft: () => Promise<void>;
   submitMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<string>;
@@ -128,6 +130,7 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
   const [workspace, setWorkspace] = useState(seedWorkspace);
   const [hydrated, setHydrated] = useState(false);
   const [failNextRequest, setFailNextRequestState] = useState(false);
+  const [syncState, setSyncState] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const workspaceRef = useRef(seedWorkspace);
   const failNextRef = useRef(false);
 
@@ -163,45 +166,47 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
     return () => { active = false; };
   }, [updateWorkspace]);
 
+  const syncServer = useCallback(async () => {
+    if (!hydrated || lineStatus !== "ready" || !isInClient || !isLoggedIn || !idToken) return;
+    setSyncState("syncing");
+    try {
+      const response = await fetch("/api/submissions", {
+        headers: { authorization: `Bearer ${idToken}` },
+        cache: "no-store",
+      });
+      const payload = await response.json() as { submissions?: PublicMerchantSubmission[] };
+      if (!response.ok || !payload.submissions) throw new Error("SYNC_FAILED");
+      const current = workspaceRef.current;
+      const serverById = new Map(payload.submissions.map((item) => [item.id, item]));
+      const mergedLocal = current.merchants.map((merchant) => {
+        const server = serverById.get(merchant.id);
+        if (!server) return merchant;
+        serverById.delete(merchant.id);
+        return {
+          ...merchant,
+          slug: server.id,
+          status: server.status === "approved" ? "published" as const : server.status,
+          updatedAt: server.updatedAt,
+        };
+      });
+      const serverOnly = [...serverById.values()].map(submissionToDraft);
+      const next = { ...current, merchants: [...serverOnly, ...mergedLocal] };
+      await writeRecord(workspaceKey, next);
+      updateWorkspace(next);
+      setSyncState("synced");
+    } catch {
+      setSyncState("error");
+      throw new Error("SYNC_FAILED");
+    }
+  }, [hydrated, idToken, isInClient, isLoggedIn, lineStatus, updateWorkspace]);
+
   useEffect(() => {
     if (!hydrated || lineStatus !== "ready" || !isInClient || !isLoggedIn || !idToken) return;
-    let active = true;
-
-    async function synchronize() {
-      try {
-        const response = await fetch("/api/submissions", {
-          headers: { authorization: `Bearer ${idToken}` },
-          cache: "no-store",
-        });
-        const payload = await response.json() as { submissions?: PublicMerchantSubmission[] };
-        if (!active || !response.ok || !payload.submissions) return;
-        const current = workspaceRef.current;
-        const serverById = new Map(payload.submissions.map((item) => [item.id, item]));
-        const mergedLocal = current.merchants.map((merchant) => {
-          const server = serverById.get(merchant.id);
-          if (!server) return merchant;
-          serverById.delete(merchant.id);
-          return {
-            ...merchant,
-            slug: server.id,
-            status: server.status === "approved" ? "published" as const : server.status,
-            updatedAt: server.updatedAt,
-          };
-        });
-        const serverOnly = [...serverById.values()].map(submissionToDraft);
-        const next = { ...current, merchants: [...serverOnly, ...mergedLocal] };
-        await writeRecord(workspaceKey, next);
-        if (active) updateWorkspace(next);
-      } catch {
-        // Keep device data usable if the status refresh is temporarily unavailable.
-      }
-    }
-
-    void synchronize();
-    const refreshOnFocus = () => { if (document.visibilityState === "visible") void synchronize(); };
+    void syncServer().catch(() => undefined);
+    const refreshOnFocus = () => { if (document.visibilityState === "visible") void syncServer().catch(() => undefined); };
     document.addEventListener("visibilitychange", refreshOnFocus);
-    return () => { active = false; document.removeEventListener("visibilitychange", refreshOnFocus); };
-  }, [hydrated, idToken, isInClient, isLoggedIn, lineStatus, updateWorkspace]);
+    return () => document.removeEventListener("visibilitychange", refreshOnFocus);
+  }, [hydrated, idToken, isInClient, isLoggedIn, lineStatus, syncServer]);
 
   const setFailNextRequest = useCallback((value: boolean) => {
     failNextRef.current = value;
@@ -227,7 +232,9 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
     events: workspace.events,
     hydrated,
     failNextRequest,
+    syncState,
     setFailNextRequest,
+    syncServer,
     saveDraft: async (draft) => commit((current) => {
       const saved = { ...normalizeMerchantDraft(draft, current.merchants[0]), updatedAt: new Date().toISOString() };
       return { ...current, merchants: current.merchants.map((item) => item.id === saved.id ? saved : item), events: [addEvent(saved.id, "saved"), ...current.events].slice(0, 100) };
@@ -270,7 +277,7 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const next = {
         ...current,
         selectedId: id,
-        merchants: [submitted, ...current.merchants.filter((item) => item.id !== id)],
+        merchants: [submitted, ...current.merchants.filter((item) => item.id !== id && item.id !== draft.id)],
         events: alreadySynced ? current.events : [addEvent(id, "submitted"), addEvent(id, "created"), ...current.events].slice(0, 100),
       };
       await writeRecord(workspaceKey, next);
@@ -282,12 +289,21 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const eventType: MerchantEventType = status === "review" ? "submitted" : status === "published" ? "published" : "unpublished";
       return { ...current, merchants: current.merchants.map((item) => item.id === id ? { ...item, status, updatedAt: new Date().toISOString() } : item), events: [addEvent(id, eventType), ...current.events].slice(0, 100) };
     }),
-    deleteMerchant: async (id) => commit((current) => {
+    deleteMerchant: async (id) => {
+      if (/^[a-f0-9]{24}$/.test(id) && idToken) {
+        const response = await fetch(`/api/submissions/${id}`, { method: "DELETE", headers: { authorization: `Bearer ${idToken}` } });
+        if (!response.ok) {
+          const payload = await response.json() as { error?: string };
+          throw new Error(payload.error || "DELETE_FAILED");
+        }
+      }
+      await commit((current) => {
       if (current.merchants.length <= 1) throw new Error("LAST_MERCHANT");
       const remaining = current.merchants.filter((item) => item.id !== id);
       return { ...current, selectedId: current.selectedId === id ? remaining[0].id : current.selectedId, merchants: remaining, events: current.events.filter((event) => event.merchantId !== id) };
-    }),
-  }), [commit, failNextRequest, hydrated, setFailNextRequest, updateWorkspace, workspace]);
+      });
+    },
+  }), [commit, failNextRequest, hydrated, idToken, setFailNextRequest, syncServer, syncState, updateWorkspace, workspace]);
 
   return <MerchantDraftContext.Provider value={value}>{children}</MerchantDraftContext.Provider>;
 }
