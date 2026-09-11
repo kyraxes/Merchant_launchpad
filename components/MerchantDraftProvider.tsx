@@ -52,7 +52,7 @@ type MerchantDraftContextValue = {
   syncState: "idle" | "syncing" | "synced" | "error";
   syncServer: () => Promise<void>;
   submitMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<string>;
-  updateMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<void>;
+  updateMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<MerchantDraft>;
   selectMerchant: (id: string) => Promise<void>;
   deleteMerchant: (id: string) => Promise<void>;
 };
@@ -110,13 +110,6 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
     }
   }, [idToken, isInClient, isLoggedIn, lineStatus, syncServer, updateWorkspace]);
 
-  useEffect(() => {
-    if (!hydrated || !isInClient || !idToken) return;
-    const refreshOnFocus = () => { if (document.visibilityState === "visible") void syncServer().catch(() => undefined); };
-    document.addEventListener("visibilitychange", refreshOnFocus);
-    return () => document.removeEventListener("visibilitychange", refreshOnFocus);
-  }, [hydrated, idToken, isInClient, syncServer]);
-
   const value = useMemo<MerchantDraftContextValue>(() => ({
     draft: workspace.merchants.find((item) => item.id === workspace.selectedId) || workspace.merchants[0] || emptyDraftRef.current,
     merchants: workspace.merchants,
@@ -144,9 +137,10 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       });
       const payload = await response.json() as { submission?: PublicMerchantSubmission; error?: string };
       if (!response.ok || !payload.submission) throw new Error(payload.error || "UPDATE_FAILED");
-      const updated = submissionToDraft(payload.submission);
+      const updated = { ...submissionToDraft(payload.submission), images: draft.images };
       const current = workspaceRef.current;
       updateWorkspace({ ...current, selectedId: updated.id, merchants: current.merchants.map((item) => item.id === updated.id ? updated : item) });
+      return updated;
     },
     selectMerchant: async (id) => {
       const current = workspaceRef.current;

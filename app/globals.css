@@ -73,6 +73,8 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .single-merchant-identity > span { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
 .single-merchant-identity > strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .single-merchant-identity .workflow-status { flex: 0 0 auto; }
+.merchant-switcher.has-legacy-duplicates { align-items: start; border-color: #efc977; background: #fffbef; }
+.legacy-duplicate-note { display: block; margin-top: 5px; color: #8b6419; font-size: 8px; line-height: 1.4; }
 .merchant-switcher label > span { display: block; margin-bottom: 4px; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
 .merchant-switcher select { width: 100%; min-height: 36px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: #f9faf9; font-size: 10px; font-weight: 750; }
 .merchant-switcher > button, .merchant-switcher > a { min-height: 36px; padding: 8px 11px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 9px; font-weight: 850; white-space: nowrap; }
@@ -333,6 +335,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .server-submission-list p { margin: 3px 0; color: var(--muted); font-size: 9px; }
 .server-submission-list small { color: #7b837f; font-size: 8px; }
 .workflow-status.rejected { color: #9a3b3b; background: #ffebeb; }
+.duplicate-record-badge { padding: 4px 7px; border-radius: 99px; color: #8b6419; background: #fff1c7; font-size: 8px; font-weight: 850; }
 .server-empty { padding: 26px !important; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
 .server-note { margin: 14px 0 0; color: var(--muted); font-size: 8px; }
 .admin-session-actions { display: flex; gap: 7px; }

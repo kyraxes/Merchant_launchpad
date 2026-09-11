@@ -18,6 +18,10 @@ export function ServerSubmissionQueue() {
   const [message, setMessage] = useState("");
   const [storage, setStorage] = useState<"memory" | "netlify-blobs" | "">("");
   const published = submissions.filter((item) => item.status === "approved");
+  const ownerCounts = submissions.reduce<Record<string, number>>((counts, item) => {
+    counts[item.ownerLineUserId] = (counts[item.ownerLineUserId] || 0) + 1;
+    return counts;
+  }, {});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -59,13 +63,30 @@ export function ServerSubmissionQueue() {
     window.location.assign("/admin/login");
   }
 
+  async function remove(submission: MerchantSubmission) {
+    if (!window.confirm(`永久删除“${submission.name}”及其图片？此操作用于清理历史重复记录，无法撤销。`)) return;
+    setBusyId(submission.id); setMessage("");
+    try {
+      const response = await fetch(`/api/admin/submissions/${submission.id}`, { method: "DELETE" });
+      if (response.status === 401) { window.location.assign("/admin/login"); return; }
+      if (!response.ok) {
+        const payload = await response.json() as { error?: string };
+        throw new Error(payload.error || "ADMIN_ERROR");
+      }
+      setSubmissions((current) => current.filter((item) => item.id !== submission.id));
+      setMessage(`“${submission.name}”及其图片已从服务器删除。`);
+    } catch (error) {
+      setMessage(apiMessage(error instanceof Error ? error.message : "ADMIN_ERROR"));
+    } finally { setBusyId(""); }
+  }
+
   return (
     <section className="server-queue admin-section">
       <div className="section-title"><div><p className="eyebrow">SERVER DATA</p><h2>真实审核与发布</h2>{storage && <small className={`storage-status ${storage}`}>{storage === "netlify-blobs" ? "● 持久化服务器数据" : "⚠ 临时内存数据"}</small>}</div><div className="admin-session-actions"><button type="button" onClick={() => void load()} disabled={loading}>{loading ? "加载中…" : "刷新"}</button><button type="button" onClick={() => void logout()}>退出后台</button></div></div>
       {message && <p className="admin-message" role="status">{message}</p>}
       {!loading && <>
         <div className="server-stats"><span><strong>{submissions.length}</strong>全部申请</span><span><strong>{submissions.filter((item) => item.status === "review").length}</strong>等待审核</span><span><strong>{submissions.filter((item) => item.status === "approved").length}</strong>已通过</span></div>
-        <div className="server-submission-list">{submissions.length ? submissions.map((submission) => <article key={submission.id}><div><div className="submission-heading"><h3>{submission.name}</h3><span className={`workflow-status ${submission.status === "approved" ? "published" : submission.status}`}>{statusLabel[submission.status]}</span></div><p>{submission.category} · {submission.address}</p><small>{submission.phone} · {submission.hours} · LINE用户：{submission.ownerDisplayName} · 图片 {Object.values(submission.imageKeys).filter(Boolean).length} 张</small></div><div className="admin-row-actions">{submission.status === "approved" && <a href={`/${submission.locale}/stores/${submission.id}`} target="_blank" rel="noreferrer">查看公开网页</a>}<button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "approved")}>通过并发布</button><button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "rejected")}>驳回</button>{submission.status !== "review" && <button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "review")}>重新审核</button>}</div></article>) : <p className="server-empty">还没有来自 LINE 的商户申请。</p>}</div>
+        <div className="server-submission-list">{submissions.length ? submissions.map((submission) => <article key={submission.id}><div><div className="submission-heading"><h3>{submission.name}</h3><span className={`workflow-status ${submission.status === "approved" ? "published" : submission.status}`}>{statusLabel[submission.status]}</span>{ownerCounts[submission.ownerLineUserId] > 1 && <span className="duplicate-record-badge">同账号 {ownerCounts[submission.ownerLineUserId]} 条</span>}</div><p>{submission.category} · {submission.address}</p><small>{submission.phone} · {submission.hours} · LINE用户：{submission.ownerDisplayName} · 图片 {Object.values(submission.imageKeys).filter(Boolean).length} 张 · {new Date(submission.submittedAt).toLocaleString("zh-CN")}</small></div><div className="admin-row-actions">{submission.status === "approved" && <a href={`/${submission.locale}/stores/${submission.id}`} target="_blank" rel="noreferrer">查看公开网页</a>}<button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "approved")}>通过并发布</button><button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "rejected")}>驳回</button>{submission.status !== "review" && <button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "review")}>重新审核</button>}<button className="danger" type="button" disabled={busyId === submission.id} onClick={() => void remove(submission)}>永久删除</button></div></article>) : <p className="server-empty">还没有来自 LINE 的商户申请。</p>}</div>
         <div className="published-server-list"><div className="section-title"><div><p className="eyebrow">PUBLIC DIRECTORY</p><h3>已发布商户列表</h3></div><a href="/zh/stores" target="_blank" rel="noreferrer">打开全部商户</a></div>{published.length ? <div>{published.map((item) => <a href={`/${item.locale}/stores/${item.id}`} target="_blank" rel="noreferrer" key={item.id}><span>🏪</span><div><strong>{item.name}</strong><small>{item.category} · {item.address}</small></div></a>)}</div> : <p className="server-empty">审核通过的商户会自动出现在这里，并生成公开网页。</p>}</div>
       </>}
       <p className="server-note">管理员会话使用 HttpOnly、SameSite Cookie，有效期 8 小时；密钥不会保存在网页存储中。</p>
