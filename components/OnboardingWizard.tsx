@@ -18,17 +18,17 @@ const text = {
 export function OnboardingWizard({ locale }: { locale: Locale }) {
   const router = useRouter();
   const { hydrated, submitMerchant } = useMerchantDraft();
-  const { status, isInClient, isLoggedIn, liffUrl } = useLiff();
+  const { status, isInClient, isLoggedIn, idToken, liffUrl } = useLiff();
   const [form, setForm] = useState<MerchantDraft | null>(null);
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const t = text[locale];
   const steps = [t.photos, t.identity, t.contact, t.confirm];
-  const hasLineIdentity = status === "ready" && isInClient && isLoggedIn;
+  const hasLineIdentity = status === "ready" && isInClient && isLoggedIn && Boolean(idToken);
 
   useEffect(() => {
-    if (hydrated && !form) setForm(createEmptyMerchantDraft("pending", locale));
+    if (hydrated && !form) setForm(createEmptyMerchantDraft(`pending-${crypto.randomUUID()}`, locale));
   }, [form, hydrated, locale]);
 
   function localized(field: "name" | "category" | "address", value: string) {
@@ -58,7 +58,7 @@ export function OnboardingWizard({ locale }: { locale: Locale }) {
   }
 
   async function continueFlow() {
-    if (!form) return;
+    if (!form || !idToken) return;
     setError("");
     if (!stepIsComplete(step)) {
       setError(t.required);
@@ -70,7 +70,7 @@ export function OnboardingWizard({ locale }: { locale: Locale }) {
     }
     setBusy(true);
     try {
-      await submitMerchant(form);
+      await submitMerchant(form, locale, idToken);
       navigator.vibrate?.(35);
       router.push(`/${locale}`);
     } catch { setError(t.error); } finally { setBusy(false); }

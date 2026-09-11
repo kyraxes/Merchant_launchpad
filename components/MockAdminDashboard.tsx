@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { profileCompletion, type MerchantWorkflowStatus } from "@/lib/merchant-draft";
 import { useMerchantDraft } from "@/components/MerchantDraftProvider";
+import { ServerSubmissionQueue } from "@/components/ServerSubmissionQueue";
 
 const statusLabel = { draft: "草稿", review: "等待审核", published: "已发布" };
 const eventLabel = { created: "创建店铺", saved: "保存资料", submitted: "提交审核", published: "发布网站", unpublished: "撤回发布", selected: "切换店铺" };
@@ -26,7 +27,9 @@ export function MockAdminDashboard() {
   if (!hydrated) return <main className="admin-shell"><p>正在加载 Mock 数据…</p></main>;
   return (
     <main className="admin-shell">
-      <header className="admin-heading"><div><p className="eyebrow">LOCAL MOCK OPERATIONS</p><h1>商户管理台</h1><p>这里只显示已经提交的商户；未完成的建档不会进入列表。</p></div><div><button className="secondary-button" type="button" onClick={() => router.push("/zh")}>返回商户端</button></div></header>
+      <header className="admin-heading"><div><p className="eyebrow">MERCHANT OPERATIONS</p><h1>商户管理台</h1><p>服务器审核队列用于真实 LINE 提交；下方设备数据仅用于 Mock 测试。</p></div><div><button className="secondary-button" type="button" onClick={() => router.push("/zh")}>返回商户端</button></div></header>
+      <ServerSubmissionQueue />
+      <div className="local-mock-heading"><p className="eyebrow">DEVICE MOCK</p><h2>当前设备测试数据</h2></div>
       <section className="admin-stats"><article><strong>{merchants.length}</strong><span>全部商户</span></article><article><strong>{merchants.filter((item) => item.status === "review").length}</strong><span>等待审核</span></article><article><strong>{merchants.filter((item) => item.status === "published").length}</strong><span>已发布</span></article><article><strong>{events.length}</strong><span>操作事件</span></article></section>
       <section className="mock-control-card"><div><strong>异常场景测试</strong><p>开启后，下一次保存、切换或状态修改会等待约 0.4 秒后失败。</p></div><label><input type="checkbox" checked={failNextRequest} onChange={(event) => setFailNextRequest(event.target.checked)}/><span>{failNextRequest ? "下一次请求将失败" : "下一次请求正常"}</span></label></section>
       {message && <p className="admin-message" role="status">{message}</p>}

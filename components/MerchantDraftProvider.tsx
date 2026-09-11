@@ -12,6 +12,7 @@ import {
   type MerchantWorkflowStatus,
   type MerchantWorkspace,
 } from "@/lib/merchant-draft";
+import type { Locale } from "@/lib/types";
 
 const legacyStorageKey = "merchant-launchpad-draft-v1";
 const databaseName = "merchant-launchpad";
@@ -93,7 +94,7 @@ type MerchantDraftContextValue = {
   setFailNextRequest: (value: boolean) => void;
   saveDraft: (next: MerchantDraft) => Promise<void>;
   resetDraft: () => Promise<void>;
-  submitMerchant: (next: MerchantDraft) => Promise<string>;
+  submitMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<string>;
   selectMerchant: (id: string) => Promise<void>;
   setMerchantStatus: (id: string, status: MerchantWorkflowStatus) => Promise<void>;
   deleteMerchant: (id: string) => Promise<void>;
@@ -174,22 +175,44 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const fallback = seedDrafts.find((item) => item.id === selected.id) || createEmptyMerchantDraft(selected.id, "th");
       return { ...current, merchants: current.merchants.map((item) => item.id === selected.id ? fallback : item) };
     }),
-    submitMerchant: async (draft) => {
-      const id = makeId("merchant");
+    submitMerchant: async (draft, locale, idToken) => {
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({
+          clientSubmissionId: draft.id,
+          locale,
+          name: draft.name[locale],
+          category: draft.category[locale],
+          address: draft.address[locale],
+          phone: draft.phone,
+          hours: draft.hours,
+          lineId: draft.lineId,
+          images: draft.images,
+        }),
+      });
+      const payload = await response.json() as { submission?: { id: string }; error?: string };
+      if (!response.ok || !payload.submission) throw new Error(payload.error || "SUBMISSION_FAILED");
+      const id = payload.submission.id;
+      const timestamp = new Date().toISOString();
       const submitted = {
         ...normalizeMerchantDraft(draft, createEmptyMerchantDraft(id, "th")),
         id,
         slug: `mock-store-${id.slice(-6).toLowerCase()}`,
         status: "review" as const,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: timestamp,
+        updatedAt: timestamp,
       };
-      await commit((current) => ({
+      const current = workspaceRef.current;
+      const alreadySynced = current.merchants.some((item) => item.id === id);
+      const next = {
         ...current,
         selectedId: id,
-        merchants: [submitted, ...current.merchants],
-        events: [addEvent(id, "submitted"), addEvent(id, "created"), ...current.events].slice(0, 100),
-      }));
+        merchants: [submitted, ...current.merchants.filter((item) => item.id !== id)],
+        events: alreadySynced ? current.events : [addEvent(id, "submitted"), addEvent(id, "created"), ...current.events].slice(0, 100),
+      };
+      await writeRecord(workspaceKey, next);
+      updateWorkspace(next);
       return id;
     },
     selectMerchant: async (id) => commit((current) => current.merchants.some((item) => item.id === id) ? { ...current, selectedId: id, events: [addEvent(id, "selected"), ...current.events].slice(0, 100) } : current),
@@ -202,7 +225,7 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const remaining = current.merchants.filter((item) => item.id !== id);
       return { ...current, selectedId: current.selectedId === id ? remaining[0].id : current.selectedId, merchants: remaining, events: current.events.filter((event) => event.merchantId !== id) };
     }),
-  }), [commit, failNextRequest, hydrated, setFailNextRequest, workspace]);
+  }), [commit, failNextRequest, hydrated, setFailNextRequest, updateWorkspace, workspace]);
 
   return <MerchantDraftContext.Provider value={value}>{children}</MerchantDraftContext.Provider>;
 }

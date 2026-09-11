@@ -15,6 +15,7 @@ type LiffContextValue = {
   isInClient: boolean;
   isLoggedIn: boolean;
   profile: LineProfile | null;
+  idToken: string | null;
   error: string | null;
   liffUrl: string;
   login: () => void;
@@ -27,6 +28,7 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
   const [isInClient, setIsInClient] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [profile, setProfile] = useState<LineProfile | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
         const loggedIn = liff.isLoggedIn();
         setIsInClient(inClient);
         setIsLoggedIn(loggedIn);
+        setIdToken(loggedIn ? liff.getIDToken() : null);
 
         if (loggedIn) {
           try {
@@ -77,6 +80,7 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
       isInClient,
       isLoggedIn,
       profile,
+      idToken,
       error,
       liffUrl,
       login: () => {
@@ -87,7 +91,7 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
         });
       },
     }),
-    [error, isInClient, isLoggedIn, profile, status],
+    [error, idToken, isInClient, isLoggedIn, profile, status],
   );
 
   return <LiffContext.Provider value={value}>{children}</LiffContext.Provider>;

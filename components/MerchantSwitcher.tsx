@@ -17,14 +17,14 @@ const text = {
 export function MerchantSwitcher({ locale }: { locale: Locale }) {
   const router = useRouter();
   const { draft, merchants, selectMerchant } = useMerchantDraft();
-  const { status, isInClient, isLoggedIn, liffUrl } = useLiff();
+  const { status, isInClient, isLoggedIn, idToken, liffUrl } = useLiff();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<"line" | "request" | null>(null);
   const t = text[locale];
 
   function create() {
     setError(null);
-    if (status !== "ready" || !isInClient || !isLoggedIn) {
+    if (status !== "ready" || !isInClient || !isLoggedIn || !idToken) {
       setError("line");
       return;
     }
