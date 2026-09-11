@@ -11,6 +11,19 @@ import type { PublicMerchantSubmission } from "@/lib/submissions";
 import { useLiff } from "@/components/LiffProvider";
 
 const emptyWorkspace: MerchantWorkspace = { version: 2, selectedId: "", merchants: [], events: [] };
+const imageKinds = ["storefront", "menu", "product"] as const;
+
+async function loadOwnerImages(merchantId: string, token: string) {
+  const entries = await Promise.all(imageKinds.map(async (kind) => {
+    const response = await fetch(`/api/submissions/${merchantId}/images/${kind}`, {
+      headers: { authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!response.ok) return [kind, null] as const;
+    return [kind, URL.createObjectURL(await response.blob())] as const;
+  }));
+  return Object.fromEntries(entries) as MerchantDraft["images"];
+}
 
 function submissionToDraft(submission: PublicMerchantSubmission): MerchantDraft {
   const draft = createEmptyMerchantDraft(submission.id, submission.locale);
@@ -41,7 +54,7 @@ function submissionBody(draft: MerchantDraft, locale: Locale) {
     phone: draft.phone,
     hours: draft.hours,
     lineId: draft.lineId,
-    images: draft.images,
+    images: Object.fromEntries(imageKinds.map((kind) => [kind, draft.images[kind]?.startsWith("data:image/") ? draft.images[kind] : null])),
   };
 }
 
@@ -89,6 +102,8 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const selectedId = merchants.some((item) => item.id === workspaceRef.current.selectedId)
         ? workspaceRef.current.selectedId
         : merchants[0]?.id || "";
+      const selected = merchants.find((item) => item.id === selectedId);
+      if (selected) selected.images = await loadOwnerImages(selected.id, idToken);
       updateWorkspace({ version: 2, selectedId, merchants, events: workspaceRef.current.events });
       setSyncState("synced");
     } catch {
@@ -144,7 +159,10 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
     },
     selectMerchant: async (id) => {
       const current = workspaceRef.current;
-      if (current.merchants.some((item) => item.id === id)) updateWorkspace({ ...current, selectedId: id });
+      const selected = current.merchants.find((item) => item.id === id);
+      if (!selected) return;
+      const images = Object.values(selected.images).some(Boolean) ? selected.images : await loadOwnerImages(id, idToken || "");
+      updateWorkspace({ ...current, selectedId: id, merchants: current.merchants.map((item) => item.id === id ? { ...item, images } : item) });
     },
     deleteMerchant: async (id) => {
       if (/^[a-f0-9]{24}$/.test(id)) {
