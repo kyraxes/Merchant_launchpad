@@ -1,34 +1,16 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { merchants as fixtureMerchants } from "@/data/merchants";
 import {
   createEmptyMerchantDraft,
-  merchantToDraft,
-  normalizeMerchantDraft,
   type MerchantDraft,
-  type MerchantEvent,
-  type MerchantEventType,
-  type MerchantWorkflowStatus,
   type MerchantWorkspace,
 } from "@/lib/merchant-draft";
 import type { Locale } from "@/lib/types";
 import type { PublicMerchantSubmission } from "@/lib/submissions";
 import { useLiff } from "@/components/LiffProvider";
 
-const seedDrafts = fixtureMerchants.slice(0, 3).map(merchantToDraft);
-seedDrafts[0] = {
-  ...seedDrafts[0],
-  images: {
-    storefront: "/test-data/mock-storefront.png",
-    menu: "/test-data/mock-menu.png",
-    product: "/test-data/mock-product.png",
-  },
-};
-const mockWorkspace: MerchantWorkspace = { version: 2, selectedId: seedDrafts[0].id, merchants: seedDrafts, events: [] };
 const emptyWorkspace: MerchantWorkspace = { version: 2, selectedId: "", merchants: [], events: [] };
-const waitForMockServer = () => new Promise((resolve) => window.setTimeout(resolve, 420));
-const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
 function submissionToDraft(submission: PublicMerchantSubmission): MerchantDraft {
   const draft = createEmptyMerchantDraft(submission.id, submission.locale);
@@ -66,18 +48,12 @@ function submissionBody(draft: MerchantDraft, locale: Locale) {
 type MerchantDraftContextValue = {
   draft: MerchantDraft;
   merchants: MerchantDraft[];
-  events: MerchantEvent[];
   hydrated: boolean;
-  failNextRequest: boolean;
   syncState: "idle" | "syncing" | "synced" | "error";
-  setFailNextRequest: (value: boolean) => void;
   syncServer: () => Promise<void>;
-  saveDraft: (next: MerchantDraft) => Promise<void>;
-  resetDraft: () => Promise<void>;
   submitMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<string>;
   updateMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<void>;
   selectMerchant: (id: string) => Promise<void>;
-  setMerchantStatus: (id: string, status: MerchantWorkflowStatus) => Promise<void>;
   deleteMerchant: (id: string) => Promise<void>;
 };
 
@@ -86,11 +62,9 @@ const MerchantDraftContext = createContext<MerchantDraftContextValue | null>(nul
 export function MerchantDraftProvider({ children }: { children: React.ReactNode }) {
   const { status: lineStatus, isInClient, isLoggedIn, idToken } = useLiff();
   const emptyDraftRef = useRef(createEmptyMerchantDraft("unsubmitted", "th"));
-  const [workspace, setWorkspace] = useState(mockWorkspace);
+  const [workspace, setWorkspace] = useState(emptyWorkspace);
   const [hydrated, setHydrated] = useState(false);
-  const [failNextRequest, setFailNextRequestState] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "syncing" | "synced" | "error">("idle");
-  const failNextRef = useRef(false);
   const workspaceRef = useRef(workspace);
 
   const updateWorkspace = useCallback((next: MerchantWorkspace) => {
@@ -129,7 +103,9 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       updateWorkspace(emptyWorkspace);
       void syncServer().catch(() => undefined).finally(() => setHydrated(true));
     } else {
-      updateWorkspace(mockWorkspace);
+      // A normal browser has no verified LINE owner identity, so it must not
+      // invent a second, device-local merchant list.
+      updateWorkspace(emptyWorkspace);
       setHydrated(true);
     }
   }, [idToken, isInClient, isLoggedIn, lineStatus, syncServer, updateWorkspace]);
@@ -141,42 +117,12 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
     return () => document.removeEventListener("visibilitychange", refreshOnFocus);
   }, [hydrated, idToken, isInClient, syncServer]);
 
-  const setFailNextRequest = useCallback((value: boolean) => {
-    failNextRef.current = value;
-    setFailNextRequestState(value);
-  }, []);
-
-  const addEvent = (merchantId: string, type: MerchantEventType): MerchantEvent => ({ id: makeId("event"), merchantId, type, at: new Date().toISOString() });
-
-  const mockCommit = useCallback(async (transform: (current: MerchantWorkspace) => MerchantWorkspace) => {
-    await waitForMockServer();
-    if (failNextRef.current) {
-      setFailNextRequest(false);
-      throw new Error("MOCK_REQUEST_FAILED");
-    }
-    updateWorkspace(transform(workspaceRef.current));
-  }, [setFailNextRequest, updateWorkspace]);
-
   const value = useMemo<MerchantDraftContextValue>(() => ({
     draft: workspace.merchants.find((item) => item.id === workspace.selectedId) || workspace.merchants[0] || emptyDraftRef.current,
     merchants: workspace.merchants,
-    events: workspace.events,
     hydrated,
-    failNextRequest,
     syncState,
-    setFailNextRequest,
     syncServer,
-    saveDraft: async (draft) => mockCommit((current) => {
-      const saved = { ...normalizeMerchantDraft(draft, current.merchants[0] || emptyDraftRef.current), updatedAt: new Date().toISOString() };
-      const exists = current.merchants.some((item) => item.id === saved.id);
-      return { ...current, selectedId: saved.id, merchants: exists ? current.merchants.map((item) => item.id === saved.id ? saved : item) : [saved, ...current.merchants], events: [addEvent(saved.id, "saved"), ...current.events].slice(0, 100) };
-    }),
-    resetDraft: async () => mockCommit((current) => {
-      const selected = current.merchants.find((item) => item.id === current.selectedId);
-      if (!selected) return current;
-      const fallback = seedDrafts.find((item) => item.id === selected.id) || createEmptyMerchantDraft(selected.id, "th");
-      return { ...current, merchants: current.merchants.map((item) => item.id === selected.id ? fallback : item) };
-    }),
     submitMerchant: async (draft, locale, token) => {
       const response = await fetch("/api/submissions", {
         method: "POST",
@@ -187,7 +133,7 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       if (!response.ok || !payload.submission) throw new Error(payload.error || "SUBMISSION_FAILED");
       const submitted = submissionToDraft(payload.submission);
       const current = workspaceRef.current;
-      updateWorkspace({ ...current, selectedId: submitted.id, merchants: [submitted, ...current.merchants.filter((item) => item.id !== submitted.id)], events: [addEvent(submitted.id, "submitted"), ...current.events].slice(0, 100) });
+      updateWorkspace({ ...current, selectedId: submitted.id, merchants: [submitted, ...current.merchants.filter((item) => item.id !== submitted.id)] });
       return submitted.id;
     },
     updateMerchant: async (draft, locale, token) => {
@@ -200,16 +146,12 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       if (!response.ok || !payload.submission) throw new Error(payload.error || "UPDATE_FAILED");
       const updated = submissionToDraft(payload.submission);
       const current = workspaceRef.current;
-      updateWorkspace({ ...current, selectedId: updated.id, merchants: current.merchants.map((item) => item.id === updated.id ? updated : item), events: [addEvent(updated.id, "submitted"), ...current.events].slice(0, 100) });
+      updateWorkspace({ ...current, selectedId: updated.id, merchants: current.merchants.map((item) => item.id === updated.id ? updated : item) });
     },
     selectMerchant: async (id) => {
       const current = workspaceRef.current;
-      if (current.merchants.some((item) => item.id === id)) updateWorkspace({ ...current, selectedId: id, events: [addEvent(id, "selected"), ...current.events].slice(0, 100) });
+      if (current.merchants.some((item) => item.id === id)) updateWorkspace({ ...current, selectedId: id });
     },
-    setMerchantStatus: async (id, status) => mockCommit((current) => {
-      const eventType: MerchantEventType = status === "review" ? "submitted" : status === "published" ? "published" : "unpublished";
-      return { ...current, merchants: current.merchants.map((item) => item.id === id ? { ...item, status, updatedAt: new Date().toISOString() } : item), events: [addEvent(id, eventType), ...current.events].slice(0, 100) };
-    }),
     deleteMerchant: async (id) => {
       if (/^[a-f0-9]{24}$/.test(id)) {
         if (!idToken) throw new Error("LINE_TOKEN_REQUIRED");
@@ -221,9 +163,9 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       }
       const current = workspaceRef.current;
       const remaining = current.merchants.filter((item) => item.id !== id);
-      updateWorkspace({ ...current, selectedId: remaining[0]?.id || "", merchants: remaining, events: current.events.filter((event) => event.merchantId !== id) });
+      updateWorkspace({ ...current, selectedId: remaining[0]?.id || "", merchants: remaining });
     },
-  }), [failNextRequest, hydrated, idToken, mockCommit, setFailNextRequest, syncServer, syncState, updateWorkspace, workspace]);
+  }), [hydrated, idToken, syncServer, syncState, updateWorkspace, workspace]);
 
   return <MerchantDraftContext.Provider value={value}>{children}</MerchantDraftContext.Provider>;
 }

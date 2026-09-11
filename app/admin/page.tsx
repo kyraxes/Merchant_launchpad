@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { MockAdminDashboard } from "@/components/MockAdminDashboard";
+import { MerchantAdminDashboard } from "@/components/MerchantAdminDashboard";
 
-export const metadata: Metadata = { title: "Mock merchant admin", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Merchant admin", robots: { index: false, follow: false } };
 
-export default function AdminPage() { return <MockAdminDashboard/>; }
+export default function AdminPage() { return <MerchantAdminDashboard/>; }

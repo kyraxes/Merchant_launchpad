@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { merchants } from "@/data/merchants";
 import { isLocale, locales } from "@/lib/i18n";
 import { listSubmissions } from "@/lib/server/submission-store";
 import { mockMode } from "@/lib/site";
@@ -26,11 +25,9 @@ export default async function PublishedBusinessesPage({ params }: { params: Prom
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const live = (await listSubmissions()).filter((item) => item.status === "approved");
-  const fixtures = mockMode ? merchants.filter((item) => item.status === "published") : [];
   const t = text[locale];
   return <main className="directory-shell"><header><p className="eyebrow">MERCHANT LAUNCHPAD</p><h1>{t.title}</h1><p>{t.body}</p></header><section className="directory-grid">
     {live.map((item) => <Link href={`/${locale}/stores/${item.id}`} key={item.id}><span>🏪</span><div><small>{item.category}</small><h2>{item.name}</h2><p>{item.address}</p></div></Link>)}
-    {fixtures.map((item) => <Link href={`/${locale}/stores/${item.slug}`} key={item.id}><span>{item.emoji}</span><div><small>{item.category[locale]}</small><h2>{item.name[locale]}</h2><p>{item.address[locale]}</p></div></Link>)}
-    {!live.length && !fixtures.length && <p>{t.empty}</p>}
+    {!live.length && <p>{t.empty}</p>}
   </section></main>;
 }
