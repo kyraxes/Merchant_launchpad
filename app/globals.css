@@ -68,7 +68,11 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .line-badge { padding: 5px 8px; border-radius: 99px; color: #057f38; background: #d5f5e1; font-size: 8px; font-weight: 900; letter-spacing: .06em; }
 .line-dot { width: 9px; height: 9px; border-radius: 50%; background: #06c755; box-shadow: 0 0 0 5px rgba(6,199,85,.12); animation: linePulse 1.15s infinite alternate; }
 @keyframes linePulse { to { opacity: .45; transform: scale(.78); } }
-.merchant-switcher { margin-bottom: 12px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto auto auto; align-items: end; gap: 8px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.merchant-switcher { margin-bottom: 12px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.single-merchant-identity { min-width: 0; display: flex; align-items: center; gap: 9px; }
+.single-merchant-identity > span { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.single-merchant-identity > strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.single-merchant-identity .workflow-status { flex: 0 0 auto; }
 .merchant-switcher label > span { display: block; margin-bottom: 4px; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
 .merchant-switcher select { width: 100%; min-height: 36px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; background: #f9faf9; font-size: 10px; font-weight: 750; }
 .merchant-switcher > button, .merchant-switcher > a { min-height: 36px; padding: 8px 11px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 9px; font-weight: 850; white-space: nowrap; }
@@ -473,8 +477,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
   .export-actions > button { flex: 1 1 100%; }
   .line-status-card { grid-template-columns: auto 1fr; }
   .line-status-card > a { grid-column: 1 / -1; text-align: center; }
-  .merchant-switcher { grid-template-columns: 1fr 1fr; }
-  .merchant-switcher label { grid-column: 1 / -1; }
+  .merchant-switcher { grid-template-columns: 1fr auto; }
   .app-brand small, .demo-pill { display: none; }
   .welcome-card { min-height: 0; padding: 27px 20px; border-radius: 21px; }
   .welcome-card h1 { font-size: 39px; }

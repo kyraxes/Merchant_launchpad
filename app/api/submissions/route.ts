@@ -11,8 +11,8 @@ function errorResponse(error: unknown) {
   const code = error instanceof Error ? error.message : "SUBMISSION_FAILED";
   const status = code === "LINE_TOKEN_REQUIRED" || code === "INVALID_LINE_TOKEN"
     ? 401
-    : code === "OWNER_SUBMISSION_LIMIT"
-      ? 429
+    : code === "OWNER_MERCHANT_EXISTS"
+      ? 409
     : code === "MISSING_REQUIRED_FIELDS" || code === "INVALID_LOCALE"
       ? 422
       : code === "INVALID_IMAGE"
@@ -28,8 +28,8 @@ export async function POST(request: Request) {
     const identity = await verifyLineIdToken(request.headers.get("authorization"));
     const input = parseSubmissionInput(await request.json());
     const existingSubmissions = await listSubmissions();
-    const activeForOwner = existingSubmissions.filter((item) => item.ownerLineUserId === identity.userId && item.status !== "rejected");
-    const duplicateStore = activeForOwner.find((item) => item.clientSubmissionId === input.clientSubmissionId || (
+    const ownedSubmissions = existingSubmissions.filter((item) => item.ownerLineUserId === identity.userId);
+    const duplicateStore = ownedSubmissions.find((item) => item.clientSubmissionId === input.clientSubmissionId || (
       item.name.toLocaleLowerCase() === input.name.toLocaleLowerCase() && item.phone === input.phone
     ));
     if (duplicateStore) {
@@ -38,8 +38,10 @@ export async function POST(request: Request) {
         headers: { "cache-control": "no-store" },
       });
     }
-    if (activeForOwner.length >= 5) throw new Error("OWNER_SUBMISSION_LIMIT");
-    const id = createHash("sha256").update(`${identity.userId}:${input.clientSubmissionId}`).digest("hex").slice(0, 24);
+    if (ownedSubmissions.length) throw new Error("OWNER_MERCHANT_EXISTS");
+    // The primary record ID is derived from the verified LINE owner, so two
+    // simultaneous requests cannot create two separate merchant records.
+    const id = createHash("sha256").update(`${identity.userId}:primary-merchant`).digest("hex").slice(0, 24);
     const submittedAt = new Date().toISOString();
     const imageKeys = {
       storefront: input.images.storefront ? `image/${id}/storefront` : null,

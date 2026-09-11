@@ -15,7 +15,7 @@ const text = {
 export function MerchantWelcome({ locale }: { locale: Locale }) {
   const { draft, merchants } = useMerchantDraft();
   const t = text[locale];
-  if (!merchants.length) return <section className="welcome-card empty-business-welcome"><div><p className="eyebrow">{t.hello}</p><h1>{t.empty}</h1><p>{t.emptyBody}</p><Link className="primary-button" href={`/${locale}/onboarding`}>{t.create} <Icon name="arrow" size={16}/></Link></div><span>🏪</span></section>;
+  if (!merchants.length) return <section className="welcome-card empty-business-welcome"><div><p className="eyebrow">{t.hello}</p><h1>{t.title}</h1><p>{t.emptyBody}</p><Link className="primary-button" href={`/${locale}/onboarding`}>{t.create} <Icon name="arrow" size={16}/></Link></div><span>🏪</span></section>;
   const completion = profileCompletion(draft);
   return (
     <section className="welcome-card">

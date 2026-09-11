@@ -10,7 +10,7 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
       <header className="app-header">
         <Link className="app-brand" href={`/${locale}`}>
           <span className="app-brand-mark"><Icon name="sparkles" size={17} /></span>
-          <span><strong>{t.brand}</strong><small>LINE LIFF App · Mock V1</small></span>
+          <span><strong>{t.brand}</strong><small>LINE LIFF App · V1</small></span>
         </Link>
         <div className="header-actions">
           <Link className="demo-pill" href="/launch">LINE</Link>

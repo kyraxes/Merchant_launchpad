@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { LineStatusCard } from "@/components/LineStatusCard";
 import { MerchantWelcome } from "@/components/MerchantWelcome";
 import { MerchantSwitcher } from "@/components/MerchantSwitcher";
+import { MerchantOnly } from "@/components/MerchantOnly";
 import { WebsiteWorkflowStatus } from "@/components/WebsiteWorkflowStatus";
 import { copy, isLocale, locales } from "@/lib/i18n";
 
@@ -84,6 +85,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
         <MerchantSwitcher locale={locale} />
         <MerchantWelcome locale={locale} />
 
+        <MerchantOnly>
         <section className="tool-section">
           <div className="section-title"><div><p className="eyebrow">V1</p><h2>{t.tools}</h2></div><span>3</span></div>
           <div className="tool-grid">
@@ -113,6 +115,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           <div><h2>{t.shared}</h2><p>{t.sharedBody}</p></div>
           <Link href={`/${locale}/profile`}>{common.edit}</Link>
         </section>
+        </MerchantOnly>
       </main>
       <Footer />
     </>
