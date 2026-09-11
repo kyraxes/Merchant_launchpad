@@ -80,6 +80,9 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .welcome-card { min-height: 310px; padding: 45px 48px; display: grid; grid-template-columns: 1.25fr .75fr; gap: 34px; align-items: center; border: 1px solid #deebe6; border-radius: 28px; background: radial-gradient(circle at 82% 20%, rgba(255,255,255,.75) 0 8%, transparent 8.5%), linear-gradient(135deg, #edf9f4, #dff2e9); overflow: hidden; }
 .welcome-card h1 { max-width: 570px; margin-bottom: 14px; font-size: clamp(38px, 5.2vw, 61px); line-height: 1.02; letter-spacing: -.055em; }
 .welcome-card > div:first-child > p:last-child { max-width: 570px; margin: 0; color: #60736b; font-size: 15px; }
+.empty-business-welcome > div { max-width: 620px; }
+.empty-business-welcome .primary-button { width: fit-content; margin-top: 20px; }
+.empty-business-welcome > span { place-self: center; font-size: 92px; }
 .profile-progress-card { min-height: 185px; padding: 23px; display: grid; grid-template-columns: 78px 1fr; gap: 15px; align-items: center; border: 1px solid rgba(255,255,255,.9); border-radius: 21px; background: rgba(255,255,255,.82); box-shadow: 0 14px 40px rgba(22,91,69,.09); }
 .progress-ring { --progress: 295deg; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--green) var(--progress), #dce9e4 0); position: relative; }
 .progress-ring::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #fff; }
@@ -121,6 +124,9 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .form-heading h1, .module-heading h1 { margin-bottom: 9px; font-size: clamp(35px, 5vw, 50px); line-height: 1.04; letter-spacing: -.05em; }
 .form-heading > p:last-child, .module-heading > p { max-width: 650px; margin-bottom: 0; color: var(--muted); font-size: 13px; }
 .form-card { margin-bottom: 13px; padding: 25px; border: 1px solid var(--line); border-radius: 19px; background: #fff; }
+.profile-empty { min-height: 65vh; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; }
+.profile-empty > span { font-size: 64px; }
+.profile-empty h1 { margin: 0; }
 .form-section-title { margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px; }
 .form-section-title > span { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px; color: #fff; background: var(--green); font-size: 11px; font-weight: 900; }
 .form-section-title h2 { margin: 2px 0 0; font-size: 18px; }

@@ -148,6 +148,6 @@ export function normalizeMerchantDraft(value: unknown, fallback: MerchantDraft):
 }
 
 export function profileCompletion(draft: MerchantDraft) {
-  const values = [draft.name.th || draft.name.en || draft.name.zh, draft.category.th, draft.phone, draft.address.th || draft.address.en || draft.address.zh, draft.hours, draft.images.storefront, draft.images.menu];
+  const values = [draft.name.th || draft.name.en || draft.name.zh, draft.category.th || draft.category.en || draft.category.zh, draft.phone, draft.address.th || draft.address.en || draft.address.zh, draft.hours];
   return Math.round(values.filter(Boolean).length / values.length * 100);
 }

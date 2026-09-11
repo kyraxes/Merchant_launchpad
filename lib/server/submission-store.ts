@@ -92,6 +92,27 @@ export async function updateSubmission(submission: MerchantSubmission) {
   await store.setJSON(key, submission, { metadata: { status: submission.status, submittedAt: submission.submittedAt } });
 }
 
+export async function updateSubmissionImages(submission: MerchantSubmission, images: Record<string, string | null>) {
+  const imageKeys = { ...submission.imageKeys };
+  if (useMemoryStore()) {
+    for (const [kind, image] of Object.entries(images)) {
+      if (!image) continue;
+      const imageKey = `image/${submission.id}/${kind}`;
+      memoryStore().set(imageKey, image);
+      imageKeys[kind as keyof typeof imageKeys] = imageKey;
+    }
+    return imageKeys;
+  }
+  const store = getStore({ name: storeName, consistency: "strong" });
+  for (const [kind, image] of Object.entries(images)) {
+    if (!image) continue;
+    const imageKey = `image/${submission.id}/${kind}`;
+    await store.set(imageKey, image, { metadata: { submissionId: submission.id, kind } });
+    imageKeys[kind as keyof typeof imageKeys] = imageKey;
+  }
+  return imageKeys;
+}
+
 export async function deleteSubmission(submission: MerchantSubmission) {
   const keys = [
     `${submissionPrefix}${submission.id}`,
