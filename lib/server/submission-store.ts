@@ -13,7 +13,10 @@ function memoryStore() {
 }
 
 function useMemoryStore() {
-  return process.env.MERCHANT_STORAGE === "memory" || process.env.NODE_ENV !== "production";
+  // Never infer persistence from NODE_ENV. Serverless hosts do not guarantee
+  // that it is present at runtime, and silently falling back would lose data
+  // whenever an instance or deployment is replaced.
+  return process.env.MERCHANT_STORAGE === "memory";
 }
 
 export function submissionStorageBackend() {
