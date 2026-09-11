@@ -180,7 +180,12 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const serverById = new Map(payload.submissions.map((item) => [item.id, item]));
       const mergedLocal = current.merchants.map((merchant) => {
         const server = serverById.get(merchant.id);
-        if (!server) return merchant;
+        if (!server) {
+          const wasServerRecord = /^[a-f0-9]{24}$/.test(merchant.id);
+          return wasServerRecord && merchant.status !== "draft"
+            ? { ...merchant, status: "draft" as const, updatedAt: new Date().toISOString() }
+            : merchant;
+        }
         serverById.delete(merchant.id);
         return {
           ...merchant,
