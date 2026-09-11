@@ -18,6 +18,7 @@ export function ServerSubmissionQueue() {
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState("");
   const [message, setMessage] = useState("");
+  const [storage, setStorage] = useState<"memory" | "netlify-blobs" | "">("");
   const published = submissions.filter((item) => item.status === "approved");
 
   useEffect(() => { setAdminKey(window.sessionStorage.getItem("merchant-admin-key") || ""); }, []);
@@ -27,10 +28,11 @@ export function ServerSubmissionQueue() {
     setLoading(true); setMessage("");
     try {
       const response = await fetch("/api/admin/submissions", { headers: { "x-admin-key": key }, cache: "no-store" });
-      const payload = await response.json() as { submissions?: MerchantSubmission[]; error?: string };
+      const payload = await response.json() as { submissions?: MerchantSubmission[]; storage?: "memory" | "netlify-blobs"; error?: string };
       if (!response.ok || !payload.submissions) throw new Error(payload.error || "ADMIN_ERROR");
       window.sessionStorage.setItem("merchant-admin-key", key);
       setSubmissions(payload.submissions);
+      setStorage(payload.storage || "");
       setConnected(true);
     } catch (error) {
       setConnected(false);
@@ -57,7 +59,7 @@ export function ServerSubmissionQueue() {
 
   return (
     <section className="server-queue admin-section">
-      <div className="section-title"><div><p className="eyebrow">SERVER DATA</p><h2>真实审核与发布</h2></div>{connected && <button type="button" onClick={() => void load()} disabled={loading}>刷新</button>}</div>
+      <div className="section-title"><div><p className="eyebrow">SERVER DATA</p><h2>真实审核与发布</h2>{connected && <small className={`storage-status ${storage}`}>{storage === "netlify-blobs" ? "● 持久化服务器数据" : "⚠ 临时内存数据"}</small>}</div>{connected && <button type="button" onClick={() => void load()} disabled={loading}>刷新</button>}</div>
       {!connected && <form className="admin-key-form" onSubmit={(event) => { event.preventDefault(); void load(); }}><label>管理密钥<input type="password" autoComplete="current-password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="ADMIN_API_KEY"/></label><button className="primary-button" type="submit" disabled={loading}>{loading ? "正在连接…" : "连接审核队列"}</button></form>}
       {message && <p className="admin-message" role="status">{message}</p>}
       {connected && <>

@@ -322,6 +322,9 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .workflow-status.rejected { color: #9a3b3b; background: #ffebeb; }
 .server-empty { padding: 26px !important; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
 .server-note { margin: 14px 0 0; color: var(--muted); font-size: 8px; }
+.storage-status { display: block; margin-top: 5px; font-size: 8px; font-weight: 800; }
+.storage-status.netlify-blobs { color: #087447; }
+.storage-status.memory { color: #a04a22; }
 .admin-stats { margin: 28px 0 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
 .admin-stats article { padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
 .admin-stats strong, .admin-stats span { display: block; }

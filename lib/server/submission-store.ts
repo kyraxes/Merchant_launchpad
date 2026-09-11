@@ -12,27 +12,31 @@ function memoryStore() {
   return holder.__merchantSubmissionStore;
 }
 
-function useNetlifyStore() {
-  return process.env.NETLIFY === "true" || Boolean(process.env.NETLIFY_SITE_ID);
+function useMemoryStore() {
+  return process.env.MERCHANT_STORAGE === "memory" || process.env.NODE_ENV !== "production";
+}
+
+export function submissionStorageBackend() {
+  return useMemoryStore() ? "memory" as const : "netlify-blobs" as const;
 }
 
 export async function getSubmission(id: string) {
   const key = `${submissionPrefix}${id}`;
-  if (!useNetlifyStore()) return (memoryStore().get(key) as MerchantSubmission | undefined) || null;
+  if (useMemoryStore()) return (memoryStore().get(key) as MerchantSubmission | undefined) || null;
   const store = getStore({ name: storeName, consistency: "strong" });
   return await store.get(key, { type: "json" }) as MerchantSubmission | null;
 }
 
 export async function getSubmissionImage(id: string, kind: string) {
   const key = `image/${id}/${kind}`;
-  if (!useNetlifyStore()) return (memoryStore().get(key) as string | undefined) || null;
+  if (useMemoryStore()) return (memoryStore().get(key) as string | undefined) || null;
   const store = getStore({ name: storeName, consistency: "strong" });
   return await store.get(key, { type: "text" });
 }
 
 export async function createSubmission(submission: MerchantSubmission, images: Record<string, string | null>) {
   const key = `${submissionPrefix}${submission.id}`;
-  if (!useNetlifyStore()) {
+  if (useMemoryStore()) {
     const memory = memoryStore();
     const existing = memory.get(key) as MerchantSubmission | undefined;
     if (existing) return { submission: existing, created: false };
@@ -66,7 +70,7 @@ export async function createSubmission(submission: MerchantSubmission, images: R
 }
 
 export async function listSubmissions() {
-  if (!useNetlifyStore()) {
+  if (useMemoryStore()) {
     return [...memoryStore().entries()]
       .filter(([key]) => key.startsWith(submissionPrefix))
       .map(([, value]) => value as MerchantSubmission)
@@ -80,7 +84,7 @@ export async function listSubmissions() {
 
 export async function updateSubmission(submission: MerchantSubmission) {
   const key = `${submissionPrefix}${submission.id}`;
-  if (!useNetlifyStore()) {
+  if (useMemoryStore()) {
     memoryStore().set(key, submission);
     return;
   }
