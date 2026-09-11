@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminErrorStatus, requireAdmin } from "@/lib/server/admin-auth";
 import { getSubmission, updateSubmission } from "@/lib/server/submission-store";
 import type { SubmissionStatus } from "@/lib/submissions";
+import { requireSameOrigin } from "@/lib/server/request-security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ const allowedStatuses: SubmissionStatus[] = ["review", "approved", "rejected"];
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    requireSameOrigin(request);
     requireAdmin(request);
     const { id } = await params;
     if (!/^[a-f0-9]{24}$/.test(id)) return NextResponse.json({ error: "INVALID_SUBMISSION_ID" }, { status: 400 });

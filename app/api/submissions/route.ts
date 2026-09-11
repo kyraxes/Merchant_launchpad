@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { parseSubmissionInput, publicSubmission, type MerchantSubmission } from "@/lib/submissions";
 import { verifyLineIdToken } from "@/lib/server/line-auth";
 import { createSubmission, listSubmissions } from "@/lib/server/submission-store";
+import { requireSameOrigin } from "@/lib/server/request-security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ function errorResponse(error: unknown) {
   const code = error instanceof Error ? error.message : "SUBMISSION_FAILED";
   const status = code === "LINE_TOKEN_REQUIRED" || code === "INVALID_LINE_TOKEN"
     ? 401
+    : code === "ORIGIN_NOT_ALLOWED"
+      ? 403
     : code === "OWNER_MERCHANT_EXISTS"
       ? 409
     : code === "MISSING_REQUIRED_FIELDS" || code === "INVALID_LOCALE"
@@ -23,6 +26,7 @@ function errorResponse(error: unknown) {
 
 export async function POST(request: Request) {
   try {
+    requireSameOrigin(request);
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > 5_000_000) return NextResponse.json({ error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
     const identity = await verifyLineIdToken(request.headers.get("authorization"));

@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { verifyLineIdToken } from "@/lib/server/line-auth";
 import { deleteSubmission, getSubmission, updateSubmission, updateSubmissionImages } from "@/lib/server/submission-store";
 import { parseSubmissionInput, publicSubmission } from "@/lib/submissions";
+import { requireSameOrigin } from "@/lib/server/request-security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    requireSameOrigin(request);
     const identity = await verifyLineIdToken(request.headers.get("authorization"));
     const { id } = await params;
     if (!/^[a-f0-9]{24}$/.test(id)) return NextResponse.json({ error: "INVALID_SUBMISSION_ID" }, { status: 400 });
@@ -18,13 +20,14 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     const code = error instanceof Error ? error.message : "DELETE_FAILED";
-    const status = code === "LINE_TOKEN_REQUIRED" || code === "INVALID_LINE_TOKEN" ? 401 : 400;
+    const status = code === "LINE_TOKEN_REQUIRED" || code === "INVALID_LINE_TOKEN" ? 401 : code === "ORIGIN_NOT_ALLOWED" ? 403 : 400;
     return NextResponse.json({ error: code }, { status, headers: { "cache-control": "no-store" } });
   }
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    requireSameOrigin(request);
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > 5_000_000) return NextResponse.json({ error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
     const identity = await verifyLineIdToken(request.headers.get("authorization"));
@@ -55,6 +58,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const code = error instanceof Error ? error.message : "UPDATE_FAILED";
     const status = code === "LINE_TOKEN_REQUIRED" || code === "INVALID_LINE_TOKEN"
       ? 401
+      : code === "ORIGIN_NOT_ALLOWED"
+        ? 403
       : code === "MISSING_REQUIRED_FIELDS" || code === "INVALID_LOCALE"
         ? 422
         : code === "INVALID_IMAGE" || code === "PAYLOAD_TOO_LARGE"

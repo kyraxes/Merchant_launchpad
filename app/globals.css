@@ -335,6 +335,8 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .workflow-status.rejected { color: #9a3b3b; background: #ffebeb; }
 .server-empty { padding: 26px !important; border: 1px dashed var(--line); border-radius: 12px; text-align: center; }
 .server-note { margin: 14px 0 0; color: var(--muted); font-size: 8px; }
+.admin-session-actions { display: flex; gap: 7px; }
+.admin-session-actions button { min-height: 34px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 9px; font-weight: 800; }
 .storage-status { display: block; margin-top: 5px; font-size: 8px; font-weight: 800; }
 .storage-status.netlify-blobs { color: #087447; }
 .storage-status.memory { color: #a04a22; }

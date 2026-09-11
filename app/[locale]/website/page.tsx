@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { isLocale, locales } from "@/lib/i18n";
 import { WebsiteDraftPreview } from "@/components/WebsiteDraftPreview";
 import { WebsiteWorkflowStatus } from "@/components/WebsiteWorkflowStatus";
+import { MerchantRouteGate } from "@/components/MerchantRouteGate";
 
 const ui = {
   th: { kicker: "BUSINESS WEBSITE", title: "เว็บไซต์ธุรกิจของคุณ", body: "เราสร้างหน้าเว็บสาธารณะจากข้อมูลธุรกิจ เพื่อให้ Google และลูกค้าค้นพบ", published: "เผยแพร่แล้ว", url: "ที่อยู่เว็บไซต์", view: "เปิดเว็บไซต์", edit: "แก้ไขเนื้อหา", content: "เนื้อหาในเว็บไซต์", info: "ข้อมูลธุรกิจ", infoBody: "ชื่อ หมวดหมู่ คำแนะนำ ที่อยู่ เวลาเปิด และเบอร์โทร", menu: "สินค้า บริการ และราคา", menuBody: "ข้อความที่ Google อ่านได้ ไม่ใช่เพียงรูปภาพ", languages: "3 ภาษา", languagesBody: "ไทย อังกฤษ และจีน มี URL แยกกัน", seo: "พร้อมสำหรับ Google", seoBody: "ชื่อหน้า ข้อมูลโครงสร้าง sitemap และหน้าโหลดเร็ว", publicOnly: "นี่คือฟังก์ชันเดียวใน V1 ที่สร้างหน้าเว็บเพิ่มเติม", next: "ขั้นตอนต่อไป", nextBody: "ตรวจข้อมูลและดูตัวอย่าง เมื่อใช้ข้อมูลจริงแล้วจึงเปิดให้ Google เก็บข้อมูล" },
@@ -25,7 +26,7 @@ export default async function WebsitePage({ params }: { params: Promise<{ locale
     { icon: "globe" as const, title: t.languages, body: t.languagesBody },
     { icon: "sparkles" as const, title: t.seo, body: t.seoBody },
   ];
-  return <>
+  return <MerchantRouteGate locale={locale}><>
     <Header locale={locale}/>
     <main className="app-main module-main">
       <section className="module-heading website-heading">
@@ -38,5 +39,5 @@ export default async function WebsitePage({ params }: { params: Promise<{ locale
       <aside className="public-note"><Icon name="globe" size={22}/><div><strong>{t.publicOnly}</strong><p>{t.nextBody}</p></div></aside>
     </main>
     <Footer/>
-  </>;
+  </></MerchantRouteGate>;
 }

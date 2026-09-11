@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { isLocale, locales } from "@/lib/i18n";
 import { MerchantSnapshot } from "@/components/MerchantSnapshot";
 import { GoogleDraftSearchLink } from "@/components/GoogleDraftSearchLink";
+import { MerchantRouteGate } from "@/components/MerchantRouteGate";
 
 const ui = {
   th: { kicker: "GOOGLE MAPS", title: "นำร้านขึ้น Google Maps", body: "เราเตรียมข้อมูลและบอกขั้นตอนต่อไป การเข้าสู่ระบบและยืนยันต้องทำโดยเจ้าของร้าน", status: "รอการยืนยันจากเจ้าของร้าน", ready: "ข้อมูลพร้อมส่ง", step1: "ค้นหาร้านเดิม", step1body: "ตรวจว่ามีโปรไฟล์ของร้านนี้อยู่แล้วหรือไม่", step2: "ตรวจข้อมูลร้าน", step2body: "ชื่อ หมวดหมู่ ที่อยู่ โทรศัพท์ เวลาเปิด และรูปภาพพร้อมแล้ว", step3: "เข้าสู่ระบบและยืนยัน", step3body: "Google จะเป็นผู้กำหนดวิธียืนยัน เจ้าของร้านต้องดำเนินการเอง", search: "ค้นหาใน Google Maps", review: "ดูข้อมูลที่จะส่ง", note: "เราไม่สามารถรับประกันอันดับหรือข้ามขั้นตอนยืนยันของ Google ได้", profile: "แก้ไขข้อมูลร้าน" },
@@ -19,7 +20,7 @@ export default async function GooglePage({ params }: { params: Promise<{ locale:
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const t = ui[locale];
-  return <>
+  return <MerchantRouteGate locale={locale}><>
     <Header locale={locale}/>
     <main className="app-main module-main">
       <section className="module-heading google-heading">
@@ -36,5 +37,5 @@ export default async function GooglePage({ params }: { params: Promise<{ locale:
       <aside className="honest-note"><strong>i</strong><p>{t.note}</p><Link href={`/${locale}/profile`}>{t.profile}</Link></aside>
     </main>
     <Footer/>
-  </>;
+  </></MerchantRouteGate>;
 }
