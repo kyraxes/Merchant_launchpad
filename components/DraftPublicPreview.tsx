@@ -7,9 +7,9 @@ import { Icon } from "@/components/Icon";
 import { localizedValue } from "@/lib/merchant-draft";
 
 const text = {
-  th: { mock: "ตัวอย่างจากข้อมูลในอุปกรณ์นี้ ยังไม่ใช่หน้า SEO ที่เผยแพร่จริง", back: "กลับไปแก้ไข", hours: "เวลาเปิด", address: "ที่ตั้ง", contact: "ติดต่อ", menu: "เมนู" },
-  en: { mock: "Device-only preview. This is not a live, indexable SEO page.", back: "Back to editor", hours: "Opening hours", address: "Location", contact: "Contact", menu: "Menu" },
-  zh: { mock: "这是当前设备生成的预览，不是真正发布并可被搜索引擎收录的SEO页面。", back: "返回编辑", hours: "营业时间", address: "店铺位置", contact: "联系方式", menu: "菜单" },
+  th: { mock: "ตัวอย่างจากข้อมูลในอุปกรณ์นี้ ยังไม่ใช่หน้า SEO ที่เผยแพร่จริง", back: "กลับไปแก้ไข", hours: "เวลาเปิด", address: "ที่ตั้ง", contact: "ติดต่อ", menu: "สินค้าและบริการ" },
+  en: { mock: "Device-only preview. This is not a live, indexable SEO page.", back: "Back to editor", hours: "Opening hours", address: "Location", contact: "Contact", menu: "Products and services" },
+  zh: { mock: "这是当前设备生成的预览，不是真正发布并可被搜索引擎收录的SEO页面。", back: "返回编辑", hours: "营业时间", address: "商户位置", contact: "联系方式", menu: "商品与服务" },
 };
 
 export function DraftPublicPreview({ locale }: { locale: Locale }) {

@@ -22,9 +22,9 @@ const themes: Record<Theme, { from: string; to: string; ink: string }> = {
   night: { from: "#1d2442", to: "#6554b8", ink: "#ffffff" },
 };
 const ui = {
-  th: { kicker: "PRODUCT POSTER", title: "สร้างโปสเตอร์สินค้า", body: "เลือกสินค้า ภาษา และขนาด แล้วดาวน์โหลดภาพพร้อมแชร์", product: "สินค้า", language: "ภาษา", format: "ขนาด", theme: "สไตล์", qr: "QR code (ไม่บังคับ)", website: "เว็บไซต์ร้าน", google: "Google Maps", line: "LINE", none: "ไม่ใส่ QR", download: "ดาวน์โหลด PNG", preparing: "กำลังสร้าง…", scan: "สแกนดูข้อมูลร้าน", mock: "ตัวอย่างนี้ใช้ภาพจำลอง" },
-  en: { kicker: "PRODUCT POSTER", title: "Create a product poster", body: "Choose a product, language and size, then download a ready-to-share image.", product: "Product", language: "Language", format: "Format", theme: "Style", qr: "QR code (optional)", website: "Store website", google: "Google Maps", line: "LINE", none: "No QR code", download: "Download PNG", preparing: "Preparing…", scan: "SCAN TO VIEW STORE", mock: "This demo uses placeholder artwork" },
-  zh: { kicker: "PRODUCT POSTER", title: "生成商品海报", body: "选择商品、语言和尺寸，下载可直接分享的图片。", product: "商品", language: "语言", format: "尺寸", theme: "风格", qr: "二维码（可选）", website: "店铺网站", google: "Google Maps", line: "LINE", none: "不添加二维码", download: "下载PNG", preparing: "生成中…", scan: "扫码查看店铺", mock: "演示版使用占位商品图" },
+  th: { kicker: "BUSINESS POSTER", title: "สร้างโปสเตอร์สินค้าและบริการ", body: "เลือกสินค้าหรือบริการ ภาษา และขนาด แล้วดาวน์โหลดภาพพร้อมแชร์", product: "สินค้าหรือบริการ", language: "ภาษา", format: "ขนาด", theme: "สไตล์", qr: "QR code (ไม่บังคับ)", website: "เว็บไซต์ธุรกิจ", google: "Google Maps", line: "LINE", none: "ไม่ใส่ QR", download: "ดาวน์โหลด PNG", preparing: "กำลังสร้าง…", scan: "สแกนดูข้อมูลธุรกิจ", mock: "ตัวอย่างนี้ใช้ภาพจำลอง" },
+  en: { kicker: "BUSINESS POSTER", title: "Create a product or service poster", body: "Choose an offering, language and size, then download a ready-to-share image.", product: "Product or service", language: "Language", format: "Format", theme: "Style", qr: "QR code (optional)", website: "Business website", google: "Google Maps", line: "LINE", none: "No QR code", download: "Download PNG", preparing: "Preparing…", scan: "SCAN TO VIEW BUSINESS", mock: "This demo uses placeholder artwork" },
+  zh: { kicker: "BUSINESS POSTER", title: "生成商品或服务海报", body: "选择商品或服务、语言和尺寸，下载可直接分享的图片。", product: "商品或服务", language: "语言", format: "尺寸", theme: "风格", qr: "二维码（可选）", website: "商户网站", google: "Google Maps", line: "LINE", none: "不添加二维码", download: "下载PNG", preparing: "生成中…", scan: "扫码查看商户", mock: "演示版使用占位图片" },
 };
 
 function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, min: number) {
@@ -85,7 +85,7 @@ export function PosterStudio({ initialLocale }: { initialLocale: Locale }) {
       } else { ctx.font = `900 ${190*scale}px Arial`; ctx.fillText(draft.emoji, pad, pad+235*scale); }
       const titleSize = fitText(ctx, product.name[locale], spec.width-pad*2, 92*scale, 44*scale); ctx.font = `800 ${titleSize}px Arial`; ctx.fillText(product.name[locale], pad, pad+365*scale);
       ctx.font = `500 ${34*scale}px Arial`; ctx.fillText(product.description[locale], pad, pad+420*scale);
-      ctx.font = `900 ${74*scale}px Arial`; ctx.fillText(`฿${product.price}`, pad, pad+515*scale);
+      ctx.font = `900 ${74*scale}px Arial`; ctx.fillText(product.price > 0 ? `฿${product.price}` : localizedValue(draft.category, locale), pad, pad+515*scale);
       const cardH = Math.min(300*scale, spec.height*.25); const cardY = spec.height-cardH-pad;
       ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.beginPath(); ctx.roundRect(pad, cardY, spec.width-pad*2, cardH, 28*scale); ctx.fill();
       ctx.fillStyle = "#171717"; ctx.font = `800 ${29*scale}px Arial`; ctx.fillText(qrTarget === "none" ? localizedValue(draft.tagline, locale) : ui[locale].scan, pad+36*scale, cardY+65*scale);

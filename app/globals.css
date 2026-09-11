@@ -357,7 +357,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .admin-progress span { height: 100%; display: block; background: var(--green); }
 .admin-merchant-copy small { color: #919995; font-size: 7px; }
 .admin-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
-.admin-row-actions button { padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: #fff; font-size: 8px; font-weight: 800; }
+.admin-row-actions button, .admin-row-actions a { padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: #fff; font-size: 8px; font-weight: 800; }
 .admin-row-actions button:disabled { opacity: .45; }
 .admin-row-actions button.danger { color: #a43c3c; }
 .event-list { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
@@ -406,8 +406,30 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .public-menu-group h4 small { margin-left: 4px; padding: 2px 4px; border-radius: 4px; color: var(--accent); background: var(--accent-soft); font-size: 7px; }
 .public-menu-group p { margin: 0; color: var(--muted); font-size: 9px; }
 .public-menu-group article > strong { font-size: 14px; }
+.public-business-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.public-business-gallery img { width: 100%; max-height: 480px; border-radius: 18px; object-fit: cover; border: 1px solid #eee; }
 .mock-bar { margin-bottom: 25px; padding: 9px; border-radius: 9px; color: #806323; background: #fff4cf; text-align: center; font-size: 9px; }
 .public-footer { width: min(1050px, calc(100% - 32px)); margin: 0 auto; padding: 25px 0 35px; display: flex; justify-content: space-between; border-top: 1px solid #eee; color: #929895; font-size: 9px; }
+.published-server-list { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.published-server-list .section-title h3 { margin: 2px 0 0; font-size: 20px; }
+.published-server-list .section-title > a { color: var(--green); font-size: 10px; font-weight: 850; }
+.published-server-list > div:last-child { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.published-server-list > div:last-child > a { min-height: 78px; padding: 12px; display: flex; align-items: center; gap: 11px; border: 1px solid var(--line); border-radius: 13px; background: #fafcfb; }
+.published-server-list > div:last-child > a > span { width: 42px; height: 42px; display: grid; place-items: center; flex: none; border-radius: 11px; background: var(--green-soft); font-size: 22px; }
+.published-server-list strong, .published-server-list small { display: block; }
+.published-server-list strong { margin-bottom: 3px; font-size: 12px; }
+.published-server-list small { color: var(--muted); font-size: 8px; }
+.directory-shell { width: min(100% - 32px, 1050px); min-height: 100vh; margin: 0 auto; padding: 70px 0; }
+.directory-shell > header { max-width: 650px; margin-bottom: 32px; }
+.directory-shell > header h1 { margin: 5px 0 8px; font-size: clamp(40px, 6vw, 68px); letter-spacing: -.055em; }
+.directory-shell > header p:last-child { color: var(--muted); }
+.directory-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.directory-grid > a { min-height: 180px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+.directory-grid > a:hover { border-color: #7ab7a3; transform: translateY(-2px); }
+.directory-grid > a > span { width: 50px; height: 50px; display: grid; place-items: center; border-radius: 14px; background: var(--green-soft); font-size: 27px; }
+.directory-grid small { color: var(--green); font-size: 8px; font-weight: 850; text-transform: uppercase; }
+.directory-grid h2 { margin: 4px 0; font-size: 18px; }
+.directory-grid p { margin: 0; color: var(--muted); font-size: 9px; }
 
 @media (min-width: 850px) { .bottom-nav { top: 8px; bottom: auto; width: 390px; min-height: 58px; box-shadow: none; background: rgba(255,255,255,.72); } .bottom-nav a { flex-direction: row; gap: 5px; font-size: 10px; } .bottom-nav svg { width: 17px; } }
 
@@ -508,6 +530,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
   .public-facts { grid-template-columns: 1fr; }
   .public-menu { padding-top: 32px; }
   .public-menu-group > div { grid-template-columns: 1fr; }
+  .public-business-gallery, .published-server-list > div:last-child, .directory-grid { grid-template-columns: 1fr; }
   .public-footer { display: block; }
   .public-footer span { display: block; margin-top: 3px; }
 }

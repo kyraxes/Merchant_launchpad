@@ -6,7 +6,7 @@ import { profileCompletion, type MerchantWorkflowStatus } from "@/lib/merchant-d
 import { useMerchantDraft } from "@/components/MerchantDraftProvider";
 import { ServerSubmissionQueue } from "@/components/ServerSubmissionQueue";
 
-const statusLabel = { draft: "草稿", review: "等待审核", published: "已发布" };
+const statusLabel = { draft: "草稿", review: "等待审核", published: "已发布", rejected: "未通过" };
 const eventLabel = { created: "创建店铺", saved: "保存资料", submitted: "提交审核", published: "发布网站", unpublished: "撤回发布", selected: "切换店铺" };
 
 export function MockAdminDashboard() {

@@ -83,3 +83,5 @@ export function publicSubmission(submission: MerchantSubmission) {
     reviewedAt: submission.reviewedAt,
   };
 }
+
+export type PublicMerchantSubmission = ReturnType<typeof publicSubmission>;

@@ -9,9 +9,9 @@ import { useMerchantDraft } from "@/components/MerchantDraftProvider";
 import { useLiff } from "@/components/LiffProvider";
 
 const text = {
-  th: { label: "ร้านที่กำลังใช้งาน", add: "เพิ่มร้าน", checking: "กำลังตรวจ LINE…", admin: "จัดการข้อมูล", draft: "ฉบับร่าง", review: "รอตรวจ", published: "เผยแพร่แล้ว", lineRequired: "ต้องเปิดใน LINE และยืนยันตัวตนก่อนสร้างร้าน", openLine: "เปิดใน LINE", requestError: "เปลี่ยนร้านไม่สำเร็จ กรุณาลองอีกครั้ง" },
-  en: { label: "Active store", add: "Add store", checking: "Checking LINE…", admin: "Mock admin", draft: "Draft", review: "In review", published: "Published", lineRequired: "Open this app inside LINE and verify your identity before creating a store.", openLine: "Open in LINE", requestError: "Store switch failed. Please try again." },
-  zh: { label: "当前店铺", add: "创建店铺", checking: "正在验证LINE…", admin: "Mock管理后台", draft: "草稿", review: "待审核", published: "已发布", lineRequired: "创建店铺需要在LINE内打开并完成身份验证。", openLine: "在LINE中打开", requestError: "切换店铺失败，请重试" },
+  th: { label: "ธุรกิจที่กำลังใช้งาน", add: "เพิ่มธุรกิจ", checking: "กำลังตรวจ LINE…", admin: "จัดการข้อมูล", draft: "ฉบับร่าง", review: "รอตรวจ", published: "เผยแพร่แล้ว", rejected: "ไม่ผ่าน", lineRequired: "ต้องเปิดใน LINE และยืนยันตัวตนก่อนสร้างธุรกิจ", openLine: "เปิดใน LINE", requestError: "เปลี่ยนธุรกิจไม่สำเร็จ กรุณาลองอีกครั้ง" },
+  en: { label: "Active business", add: "Add business", checking: "Checking LINE…", admin: "Admin", draft: "Draft", review: "In review", published: "Published", rejected: "Rejected", lineRequired: "Open this app inside LINE and verify your identity before creating a business.", openLine: "Open in LINE", requestError: "Business switch failed. Please try again." },
+  zh: { label: "当前商户", add: "创建商户", checking: "正在验证LINE…", admin: "管理后台", draft: "草稿", review: "待审核", published: "已发布", rejected: "未通过", lineRequired: "创建商户需要在LINE内打开并完成身份验证。", openLine: "在LINE中打开", requestError: "切换商户失败，请重试" },
 };
 
 export function MerchantSwitcher({ locale }: { locale: Locale }) {

@@ -4,15 +4,34 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { getMerchant, merchants } from "@/data/merchants";
 import { copy, isLocale, locales } from "@/lib/i18n";
-import { googleMapsSearchUrl, merchantUrl, mockMode } from "@/lib/site";
+import { getSubmission } from "@/lib/server/submission-store";
+import { googleMapsAddressUrl, googleMapsSearchUrl, merchantUrl, mockMode } from "@/lib/site";
 
 type PageProps = { params: Promise<{ locale: string; slug: string }> };
 
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() { return locales.flatMap((locale) => merchants.map((merchant) => ({ locale, slug: merchant.slug }))); }
+
+async function getApprovedSubmission(slug: string) {
+  if (!/^[a-f0-9]{24}$/.test(slug)) return null;
+  const submission = await getSubmission(slug);
+  return submission?.status === "approved" ? submission : null;
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params; if (!isLocale(locale)) return {};
-  const merchant = getMerchant(slug); if (!merchant) return {};
+  const merchant = getMerchant(slug);
+  if (!merchant) {
+    const submission = await getApprovedSubmission(slug);
+    if (!submission) return {};
+    return {
+      title: `${submission.name} — ${submission.category}`,
+      description: `${submission.name}, ${submission.category}. ${submission.address}.`,
+      alternates: { canonical: merchantUrl(submission.locale, submission.id) },
+      robots: mockMode ? { index: false, follow: false } : { index: true, follow: true },
+    };
+  }
   return {
     title: `${merchant.name[locale]} — ${merchant.category[locale]} · ${merchant.area[locale]}`,
     description: merchant.description[locale],
@@ -23,7 +42,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function MerchantPage({ params }: PageProps) {
   const { locale, slug } = await params; if (!isLocale(locale)) notFound();
-  const merchant = getMerchant(slug); if (!merchant) notFound();
+  const merchant = getMerchant(slug);
+  if (!merchant) {
+    const submission = await getApprovedSubmission(slug);
+    if (!submission) notFound();
+    return <ApprovedMerchantPage locale={locale} submission={submission}/>;
+  }
   const t = copy[locale]; const mapUrl = googleMapsSearchUrl(merchant.name.en, merchant.coordinates.lat, merchant.coordinates.lng);
   const jsonLd = {
     "@context": "https://schema.org", "@type": merchant.categoryId, name: merchant.name[locale],
@@ -44,5 +68,41 @@ export default async function MerchantPage({ params }: PageProps) {
       <aside className="mock-bar">{t.mockNotice}</aside>
     </main>
     <footer className="public-footer"><strong>{merchant.name[locale]}</strong><span>Powered by Merchant Launchpad · Mock V1</span></footer>
+  </div>;
+}
+
+const publishedCopy = {
+  th: { about: "ข้อมูลธุรกิจ", hours: "เวลาเปิด", location: "ที่ตั้ง", call: "โทร", map: "เปิดใน Google Maps", contact: "ติดต่อ", gallery: "สินค้า บริการ และข้อมูลราคา", notice: "หน้าธุรกิจนี้เผยแพร่หลังผ่านการตรวจสอบแล้ว" },
+  en: { about: "Business information", hours: "Opening hours", location: "Location", call: "Call", map: "Open in Google Maps", contact: "Contact", gallery: "Products, services and price information", notice: "This business page was published after review." },
+  zh: { about: "商户信息", hours: "营业时间", location: "商户地址", call: "电话联系", map: "在Google Maps打开", contact: "联系方式", gallery: "商品、服务与价目信息", notice: "该商户资料已通过审核并公开发布。" },
+};
+
+async function ApprovedMerchantPage({ locale, submission }: { locale: "th" | "en" | "zh"; submission: NonNullable<Awaited<ReturnType<typeof getApprovedSubmission>>> }) {
+  const t = publishedCopy[locale];
+  const mapUrl = googleMapsAddressUrl(submission.name, submission.address);
+  const imageUrl = (kind: "storefront" | "menu" | "product") => `/api/public/merchants/${submission.id}/images/${kind}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: submission.name,
+    description: `${submission.name}, ${submission.category}.`,
+    url: merchantUrl(locale, submission.id),
+    telephone: submission.phone,
+    address: { "@type": "PostalAddress", streetAddress: submission.address, addressCountry: "TH" },
+    openingHours: submission.hours,
+  };
+  return <div className="public-site" style={{ "--accent": "#147d64", "--accent-soft": "#e7f5ef" } as React.CSSProperties}>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(jsonLd).replace(/</g,"\\u003c")}}/>
+    <header className="public-header"><Link href={`/${locale}/stores/${submission.id}`}><span>🏪</span><strong>{submission.name}</strong></Link><nav>{locales.map((item)=><Link className={locale===item?"active":""} href={`/${item}/stores/${submission.id}`} key={item}>{item==="zh"?"中":item==="th"?"ไทย":"EN"}</Link>)}</nav></header>
+    <main className="public-main">
+      <section className="public-hero">
+        <div className="public-art">{submission.imageKeys.storefront ? <img src={imageUrl("storefront")} alt={submission.name}/> : <span>🏪</span>}<small>{submission.category}</small></div>
+        <div className="public-intro"><p className="eyebrow">{t.about}</p><h1>{submission.name}</h1><h2>{submission.category}</h2><p>{t.notice}</p><div className="button-row"><a className="primary-button" href={mapUrl} target="_blank" rel="noreferrer"><Icon name="map" size={17}/>{t.map}</a><a className="secondary-button" href={`tel:${submission.phone.replace(/\s/g,"")}`}><Icon name="phone" size={17}/>{t.call}</a></div></div>
+      </section>
+      <section className="public-facts"><article><Icon name="clock"/><div><strong>{t.hours}</strong><span>{submission.hours}</span></div></article><article><Icon name="pin"/><div><strong>{t.location}</strong><span>{submission.address}</span></div></article><article><Icon name="phone"/><div><strong>{t.contact}</strong><span>{submission.phone}{submission.lineId ? ` · LINE ${submission.lineId}` : ""}</span></div></article></section>
+      {(submission.imageKeys.menu || submission.imageKeys.product) && <section className="public-menu"><div className="public-section-title"><p className="eyebrow">{submission.category}</p><h2>{t.gallery}</h2></div><div className="public-business-gallery">{submission.imageKeys.menu && <img src={imageUrl("menu")} alt={t.gallery}/>} {submission.imageKeys.product && <img src={imageUrl("product")} alt={t.gallery}/>}</div></section>}
+      {mockMode && <aside className="mock-bar">Pilot mode · Search engine indexing is currently disabled</aside>}
+    </main>
+    <footer className="public-footer"><strong>{submission.name}</strong><span>Powered by Merchant Launchpad</span></footer>
   </div>;
 }

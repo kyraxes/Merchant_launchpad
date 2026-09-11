@@ -23,6 +23,13 @@ export async function getSubmission(id: string) {
   return await store.get(key, { type: "json" }) as MerchantSubmission | null;
 }
 
+export async function getSubmissionImage(id: string, kind: string) {
+  const key = `image/${id}/${kind}`;
+  if (!useNetlifyStore()) return (memoryStore().get(key) as string | undefined) || null;
+  const store = getStore({ name: storeName, consistency: "strong" });
+  return await store.get(key, { type: "text" });
+}
+
 export async function createSubmission(submission: MerchantSubmission, images: Record<string, string | null>) {
   const key = `${submissionPrefix}${submission.id}`;
   if (!useNetlifyStore()) {

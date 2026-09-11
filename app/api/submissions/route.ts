@@ -73,3 +73,15 @@ export async function POST(request: Request) {
     return errorResponse(error);
   }
 }
+
+export async function GET(request: Request) {
+  try {
+    const identity = await verifyLineIdToken(request.headers.get("authorization"));
+    const submissions = (await listSubmissions())
+      .filter((item) => item.ownerLineUserId === identity.userId)
+      .map(publicSubmission);
+    return NextResponse.json({ submissions }, { headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}

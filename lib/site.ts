@@ -15,3 +15,7 @@ export function googleMapsSearchUrl(name: string, lat: number, lng: number) {
   const query = encodeURIComponent(`${name} ${lat},${lng}`);
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
+
+export function googleMapsAddressUrl(name: string, address: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${address}`)}`;
+}

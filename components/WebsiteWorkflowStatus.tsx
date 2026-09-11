@@ -5,9 +5,9 @@ import { useMerchantDraft } from "@/components/MerchantDraftProvider";
 import { Icon } from "@/components/Icon";
 
 const text = {
-  th: { draft: "ฉบับร่าง", review: "รอตรวจ", published: "เผยแพร่แล้ว" },
-  en: { draft: "Draft", review: "In review", published: "Published" },
-  zh: { draft: "草稿", review: "等待审核", published: "已经发布" },
+  th: { draft: "ฉบับร่าง", review: "รอตรวจ", published: "เผยแพร่แล้ว", rejected: "ไม่ผ่าน" },
+  en: { draft: "Draft", review: "In review", published: "Published", rejected: "Rejected" },
+  zh: { draft: "草稿", review: "等待审核", published: "已经发布", rejected: "未通过" },
 };
 
 export function WebsiteWorkflowStatus({ locale, compact = false }: { locale: Locale; compact?: boolean }) {

@@ -1,7 +1,7 @@
 import type { Locale, LocalizedText, MenuSection, Merchant } from "@/lib/types";
 
 export type DraftImageKind = "storefront" | "menu" | "product";
-export type MerchantWorkflowStatus = "draft" | "review" | "published";
+export type MerchantWorkflowStatus = "draft" | "review" | "published" | "rejected";
 
 export type MerchantDraft = {
   version: 2;
@@ -73,12 +73,12 @@ export function merchantToDraft(merchant: Merchant): MerchantDraft {
 
 export function createEmptyMerchantDraft(id: string, locale: Locale): MerchantDraft {
   const blank = { th: "", en: "", zh: "" };
-  const category = { th: "ร้านอาหาร", en: "Restaurant", zh: "餐厅" };
-  const tagline = { th: "ร้านใหม่ของคุณ", en: "Your new store", zh: "你的新店铺" };
+  const category = { th: "ธุรกิจท้องถิ่น", en: "Local business", zh: "本地商户" };
+  const tagline = { th: "ธุรกิจของคุณในชุมชน", en: "Your local business", zh: "你身边的本地商户" };
   const defaultProduct = {
     id: "first-product",
-    name: { th: "เมนูแนะนำ", en: "Featured item", zh: "招牌商品" },
-    description: { th: "เพิ่มรายละเอียดภายหลัง", en: "Add details later", zh: "稍后完善商品信息" },
+    name: { th: "สินค้าหรือบริการแนะนำ", en: "Featured product or service", zh: "主推商品或服务" },
+    description: { th: "เพิ่มรายละเอียดภายหลัง", en: "Add details later", zh: "稍后完善详细信息" },
     price: 0,
     featured: true,
   };
@@ -96,7 +96,7 @@ export function createEmptyMerchantDraft(id: string, locale: Locale): MerchantDr
     lineId: "",
     hours: "",
     images: { storefront: null, menu: null, product: null },
-    menu: [{ id: "featured", name: { th: "เมนู", en: "Menu", zh: "菜单" }, items: [defaultProduct] }],
+    menu: [{ id: "featured", name: { th: "สินค้าและบริการ", en: "Products and services", zh: "商品与服务" }, items: [defaultProduct] }],
     accent: "#147d64",
     accentSoft: "#e7f5ef",
     emoji: "🏪",
@@ -119,7 +119,7 @@ export function normalizeMerchantDraft(value: unknown, fallback: MerchantDraft):
   if (!value || typeof value !== "object") throw new Error("Invalid merchant data");
   const source = value as Partial<MerchantDraft>;
   const images = source.images && typeof source.images === "object" ? source.images : fallback.images;
-  const status: MerchantWorkflowStatus = source.status === "review" || source.status === "published" ? source.status : "draft";
+  const status: MerchantWorkflowStatus = source.status === "review" || source.status === "published" || source.status === "rejected" ? source.status : "draft";
   return {
     version: 2,
     id: typeof source.id === "string" ? source.id : fallback.id,

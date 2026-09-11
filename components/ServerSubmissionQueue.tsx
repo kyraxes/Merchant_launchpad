@@ -18,6 +18,7 @@ export function ServerSubmissionQueue() {
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState("");
   const [message, setMessage] = useState("");
+  const published = submissions.filter((item) => item.status === "approved");
 
   useEffect(() => { setAdminKey(window.sessionStorage.getItem("merchant-admin-key") || ""); }, []);
 
@@ -56,12 +57,13 @@ export function ServerSubmissionQueue() {
 
   return (
     <section className="server-queue admin-section">
-      <div className="section-title"><div><p className="eyebrow">SERVER DATA</p><h2>真实审核队列</h2></div>{connected && <button type="button" onClick={() => void load()} disabled={loading}>刷新</button>}</div>
+      <div className="section-title"><div><p className="eyebrow">SERVER DATA</p><h2>真实审核与发布</h2></div>{connected && <button type="button" onClick={() => void load()} disabled={loading}>刷新</button>}</div>
       {!connected && <form className="admin-key-form" onSubmit={(event) => { event.preventDefault(); void load(); }}><label>管理密钥<input type="password" autoComplete="current-password" value={adminKey} onChange={(event) => setAdminKey(event.target.value)} placeholder="ADMIN_API_KEY"/></label><button className="primary-button" type="submit" disabled={loading}>{loading ? "正在连接…" : "连接审核队列"}</button></form>}
       {message && <p className="admin-message" role="status">{message}</p>}
       {connected && <>
         <div className="server-stats"><span><strong>{submissions.length}</strong>全部申请</span><span><strong>{submissions.filter((item) => item.status === "review").length}</strong>等待审核</span><span><strong>{submissions.filter((item) => item.status === "approved").length}</strong>已通过</span></div>
-        <div className="server-submission-list">{submissions.length ? submissions.map((submission) => <article key={submission.id}><div><div className="submission-heading"><h3>{submission.name}</h3><span className={`workflow-status ${submission.status === "approved" ? "published" : submission.status}`}>{statusLabel[submission.status]}</span></div><p>{submission.category} · {submission.address}</p><small>{submission.phone} · {submission.hours} · LINE用户：{submission.ownerDisplayName} · 图片 {Object.values(submission.imageKeys).filter(Boolean).length} 张</small></div><div className="admin-row-actions"><button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "approved")}>通过</button><button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "rejected")}>驳回</button>{submission.status !== "review" && <button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "review")}>重新审核</button>}</div></article>) : <p className="server-empty">还没有来自 LINE 的商户申请。</p>}</div>
+        <div className="server-submission-list">{submissions.length ? submissions.map((submission) => <article key={submission.id}><div><div className="submission-heading"><h3>{submission.name}</h3><span className={`workflow-status ${submission.status === "approved" ? "published" : submission.status}`}>{statusLabel[submission.status]}</span></div><p>{submission.category} · {submission.address}</p><small>{submission.phone} · {submission.hours} · LINE用户：{submission.ownerDisplayName} · 图片 {Object.values(submission.imageKeys).filter(Boolean).length} 张</small></div><div className="admin-row-actions">{submission.status === "approved" && <a href={`/${submission.locale}/stores/${submission.id}`} target="_blank" rel="noreferrer">查看公开网页</a>}<button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "approved")}>通过并发布</button><button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "rejected")}>驳回</button>{submission.status !== "review" && <button type="button" disabled={busyId === submission.id} onClick={() => void changeStatus(submission.id, "review")}>重新审核</button>}</div></article>) : <p className="server-empty">还没有来自 LINE 的商户申请。</p>}</div>
+        <div className="published-server-list"><div className="section-title"><div><p className="eyebrow">PUBLIC DIRECTORY</p><h3>已发布商户列表</h3></div><a href="/zh/stores" target="_blank" rel="noreferrer">打开全部商户</a></div>{published.length ? <div>{published.map((item) => <a href={`/${item.locale}/stores/${item.id}`} target="_blank" rel="noreferrer" key={item.id}><span>🏪</span><div><strong>{item.name}</strong><small>{item.category} · {item.address}</small></div></a>)}</div> : <p className="server-empty">审核通过的商户会自动出现在这里，并生成公开网页。</p>}</div>
       </>}
       <p className="server-note">管理密钥只保存在当前标签页。服务器未配置密钥时，审核数据不会对浏览器开放。</p>
     </section>

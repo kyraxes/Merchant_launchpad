@@ -13,6 +13,8 @@ import {
   type MerchantWorkspace,
 } from "@/lib/merchant-draft";
 import type { Locale } from "@/lib/types";
+import type { PublicMerchantSubmission } from "@/lib/submissions";
+import { useLiff } from "@/components/LiffProvider";
 
 const legacyStorageKey = "merchant-launchpad-draft-v1";
 const databaseName = "merchant-launchpad";
@@ -30,6 +32,25 @@ seedDrafts[0] = {
   },
 };
 const seedWorkspace: MerchantWorkspace = { version: 2, selectedId: seedDrafts[0].id, merchants: seedDrafts, events: [] };
+
+function submissionToDraft(submission: PublicMerchantSubmission): MerchantDraft {
+  const draft = createEmptyMerchantDraft(submission.id, submission.locale);
+  const localized = (value: string) => ({ th: "", en: "", zh: "", [submission.locale]: value });
+  return {
+    ...draft,
+    id: submission.id,
+    slug: submission.id,
+    status: submission.status === "approved" ? "published" : submission.status,
+    name: localized(submission.name),
+    category: localized(submission.category),
+    address: localized(submission.address),
+    phone: submission.phone,
+    lineId: submission.lineId,
+    hours: submission.hours,
+    createdAt: submission.submittedAt,
+    updatedAt: submission.updatedAt,
+  };
+}
 
 function openDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -103,6 +124,7 @@ type MerchantDraftContextValue = {
 const MerchantDraftContext = createContext<MerchantDraftContextValue | null>(null);
 
 export function MerchantDraftProvider({ children }: { children: React.ReactNode }) {
+  const { status: lineStatus, isInClient, isLoggedIn, idToken } = useLiff();
   const [workspace, setWorkspace] = useState(seedWorkspace);
   const [hydrated, setHydrated] = useState(false);
   const [failNextRequest, setFailNextRequestState] = useState(false);
@@ -140,6 +162,46 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
     void hydrate();
     return () => { active = false; };
   }, [updateWorkspace]);
+
+  useEffect(() => {
+    if (!hydrated || lineStatus !== "ready" || !isInClient || !isLoggedIn || !idToken) return;
+    let active = true;
+
+    async function synchronize() {
+      try {
+        const response = await fetch("/api/submissions", {
+          headers: { authorization: `Bearer ${idToken}` },
+          cache: "no-store",
+        });
+        const payload = await response.json() as { submissions?: PublicMerchantSubmission[] };
+        if (!active || !response.ok || !payload.submissions) return;
+        const current = workspaceRef.current;
+        const serverById = new Map(payload.submissions.map((item) => [item.id, item]));
+        const mergedLocal = current.merchants.map((merchant) => {
+          const server = serverById.get(merchant.id);
+          if (!server) return merchant;
+          serverById.delete(merchant.id);
+          return {
+            ...merchant,
+            slug: server.id,
+            status: server.status === "approved" ? "published" as const : server.status,
+            updatedAt: server.updatedAt,
+          };
+        });
+        const serverOnly = [...serverById.values()].map(submissionToDraft);
+        const next = { ...current, merchants: [...serverOnly, ...mergedLocal] };
+        await writeRecord(workspaceKey, next);
+        if (active) updateWorkspace(next);
+      } catch {
+        // Keep device data usable if the status refresh is temporarily unavailable.
+      }
+    }
+
+    void synchronize();
+    const refreshOnFocus = () => { if (document.visibilityState === "visible") void synchronize(); };
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    return () => { active = false; document.removeEventListener("visibilitychange", refreshOnFocus); };
+  }, [hydrated, idToken, isInClient, isLoggedIn, lineStatus, updateWorkspace]);
 
   const setFailNextRequest = useCallback((value: boolean) => {
     failNextRef.current = value;
@@ -191,15 +253,15 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
           images: draft.images,
         }),
       });
-      const payload = await response.json() as { submission?: { id: string }; error?: string };
+      const payload = await response.json() as { submission?: PublicMerchantSubmission; error?: string };
       if (!response.ok || !payload.submission) throw new Error(payload.error || "SUBMISSION_FAILED");
       const id = payload.submission.id;
       const timestamp = new Date().toISOString();
       const submitted = {
         ...normalizeMerchantDraft(draft, createEmptyMerchantDraft(id, "th")),
         id,
-        slug: `mock-store-${id.slice(-6).toLowerCase()}`,
-        status: "review" as const,
+        slug: id,
+        status: payload.submission.status === "approved" ? "published" as const : payload.submission.status,
         createdAt: timestamp,
         updatedAt: timestamp,
       };
