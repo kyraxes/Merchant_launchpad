@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Icon } from "@/components/Icon";
-import { LineStatusCard } from "@/components/LineStatusCard";
+import { AccountStatus } from "@/components/AccountStatus";
 import { MerchantWelcome } from "@/components/MerchantWelcome";
 import { MerchantSwitcher } from "@/components/MerchantSwitcher";
-import { MerchantOnly } from "@/components/MerchantOnly";
 import { WebsiteWorkflowStatus } from "@/components/WebsiteWorkflowStatus";
 import { copy, isLocale, locales } from "@/lib/i18n";
 
@@ -14,7 +13,7 @@ const ui = {
   th: {
     hello: "สวัสดี",
     title: "เริ่มให้ลูกค้าค้นพบร้านของคุณ",
-    subtitle: "กรอกข้อมูลร้านเพียงครั้งเดียว แล้วใช้กับเครื่องมือทั้ง 3 อย่าง",
+    subtitle: "กรอกข้อมูลร้านเพียงครั้งเดียว แล้วใช้กับเครื่องมือของคุณ",
     complete: "ข้อมูลร้านครบแล้ว",
     improve: "เพิ่มข้อมูล",
     tools: "เครื่องมือของคุณ",
@@ -33,7 +32,7 @@ const ui = {
   en: {
     hello: "Hello",
     title: "Get your business ready to be found",
-    subtitle: "Enter your business information once, then reuse it across all three tools.",
+    subtitle: "Enter your business information once, then reuse it across your tools.",
     complete: "Business profile complete",
     improve: "Improve profile",
     tools: "Your tools",
@@ -52,7 +51,7 @@ const ui = {
   zh: {
     hello: "你好",
     title: "让更多顾客找到你的生意",
-    subtitle: "商户资料只填写一次，三个工具都可以直接使用。",
+    subtitle: "商户资料只填写一次，各个工具都可以直接使用。",
     complete: "商户资料已完成",
     improve: "完善资料",
     tools: "你的工具",
@@ -65,7 +64,7 @@ const ui = {
     posterTitle: "生成商品海报",
     posterBody: "选择商品，一键制作可直接分享的海报。",
     posterStatus: "可以开始",
-    shared: "一份资料，三处使用",
+    shared: "一份资料，多处使用",
     sharedBody: "商户名称、地址、营业时间、照片、商品和服务会自动复用，不需要重复填写。",
   },
 };
@@ -81,14 +80,21 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
     <>
       <Header locale={locale} />
       <main className="app-main dashboard-main">
-        <LineStatusCard locale={locale} />
+        <AccountStatus locale={locale} />
         <MerchantSwitcher locale={locale} />
         <MerchantWelcome locale={locale} />
 
-        <MerchantOnly>
+
         <section className="tool-section">
-          <div className="section-title"><div><p className="eyebrow">V1</p><h2>{t.tools}</h2></div><span>3</span></div>
+          <div className="section-title"><div><p className="eyebrow">WORKSPACE</p><h2>{t.tools}</h2></div><span>4</span></div>
           <div className="tool-grid">
+            <Link className="tool-card menu-tool" href={`/${locale}/menu`}>
+              <span className="tool-icon"><Icon name="store" size={27}/></span>
+              <span className="status-chip waiting">{locale === "zh" ? "模拟识别" : locale === "th" ? "ระบบจำลอง" : "Mock recognition"}</span>
+              <h3>{locale === "zh" ? "创建线上菜单" : locale === "th" ? "สร้างเมนูออนไลน์" : "Create your online menu"}</h3>
+              <p>{locale === "zh" ? "上传菜单照片，校对菜品和价格，发布给顾客。" : locale === "th" ? "อัปโหลดรูป ตรวจสอบชื่อและราคา แล้วเผยแพร่" : "Upload photos, check items and prices, then publish."}</p>
+              <span className="tool-action">{common.continue}<Icon name="arrow" size={17}/></span>
+            </Link>
             <Link className="tool-card google-tool" href={`/${locale}/google`}>
               <span className="tool-icon"><Icon name="map" size={27}/></span>
               <span className="status-chip waiting">{t.googleStatus}</span>
@@ -115,7 +121,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           <div><h2>{t.shared}</h2><p>{t.sharedBody}</p></div>
           <Link href={`/${locale}/profile`}>{common.edit}</Link>
         </section>
-        </MerchantOnly>
+
       </main>
       <Footer />
     </>

@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import type { MerchantSubmission } from "@/lib/submissions";
+import { emptyMenu, type MenuRecord } from "@/lib/menu";
 
 const storeName = "merchant-launchpad-submissions-v1";
 const submissionPrefix = "submission/";
@@ -119,6 +120,7 @@ export async function updateSubmissionImages(submission: MerchantSubmission, ima
 export async function deleteSubmission(submission: MerchantSubmission) {
   const keys = [
     `${submissionPrefix}${submission.id}`,
+    `menu/${submission.id}`,
     ...Object.values(submission.imageKeys).filter((key): key is string => Boolean(key)),
   ];
   if (useMemoryStore()) {
@@ -127,4 +129,26 @@ export async function deleteSubmission(submission: MerchantSubmission) {
   }
   const store = getStore({ name: storeName, consistency: "strong" });
   await Promise.all(keys.map((key) => store.delete(key)));
+}
+
+export async function getMenu(id: string): Promise<MenuRecord> {
+  const key = `menu/${id}`;
+  if (useMemoryStore()) return structuredClone((memoryStore().get(key) as MenuRecord) || emptyMenu());
+  const store = getStore({ name: storeName, consistency: "strong" });
+  return (await store.get(key, { type: "json" }) as MenuRecord | null) || emptyMenu();
+}
+
+export async function writeMenu(id: string, previousRevision: number, next: MenuRecord) {
+  const key = `menu/${id}`;
+  if (useMemoryStore()) {
+    const existing = memoryStore().get(key) as MenuRecord | undefined;
+    if ((existing?.revision || 0) !== previousRevision) throw new Error("MENU_CONFLICT");
+    memoryStore().set(key, structuredClone(next));
+    return;
+  }
+  const store = getStore({ name: storeName, consistency: "strong" });
+  const existing = await store.getWithMetadata(key, { type: "json" });
+  if (((existing?.data as MenuRecord | undefined)?.revision || 0) !== previousRevision) throw new Error("MENU_CONFLICT");
+  const result = await store.setJSON(key, next, existing ? { onlyIfMatch: existing.etag } : { onlyIfNew: true });
+  if (!result.modified) throw new Error("MENU_CONFLICT");
 }

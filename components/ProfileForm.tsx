@@ -6,27 +6,27 @@ import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/types";
 import type { DraftImageKind, MerchantDraft } from "@/lib/merchant-draft";
 import { useMerchantDraft } from "@/components/MerchantDraftProvider";
-import { useLiff } from "@/components/LiffProvider";
+import { useAccount } from "@/components/AccountProvider";
 import { Icon } from "@/components/Icon";
 import { compressImage } from "@/lib/browser-image";
 
 const ui = {
-  th: { title: "แก้ไขข้อมูลธุรกิจ", body: "ข้อมูลที่ส่งแล้วเก็บบนเซิร์ฟเวอร์ การแก้ไขจะส่งเข้าตรวจสอบอีกครั้ง", empty: "ยังไม่มีธุรกิจบนเซิร์ฟเวอร์", create: "สร้างธุรกิจ", basic: "ข้อมูลพื้นฐาน", name: "ชื่อธุรกิจ", category: "ประเภทธุรกิจ", phone: "เบอร์โทร", line: "LINE (ไม่บังคับ)", address: "ที่อยู่", hours: "เวลาเปิด", media: "เปลี่ยนรูป (ไม่บังคับ)", storefront: "หน้าร้านหรือสถานที่", menu: "สินค้า บริการ หรือราคา", product: "สินค้าหรือผลงานเด่น", add: "เลือกรูปใหม่", submit: "บันทึกและส่งตรวจสอบ", submitting: "กำลังส่ง…", submitted: "บันทึกบนเซิร์ฟเวอร์และส่งตรวจสอบแล้ว", required: "กรุณากรอกข้อมูลที่จำเป็นให้ครบ", lineRequired: "ต้องเปิดใน LINE", failed: "บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง", delete: "ลบข้อมูลนี้", deleteConfirm: "ลบข้อมูลนี้จากเซิร์ฟเวอร์หรือไม่?", deleteFailed: "ลบไม่ได้ ธุรกิจที่เผยแพร่แล้วต้องถอนก่อน", publishedWarning: "การแก้ไขธุรกิจที่เผยแพร่แล้วจะกลับเข้าสู่การตรวจสอบ" },
-  en: { title: "Edit business information", body: "Submitted information is stored on the server. Changes are sent for review again.", empty: "No server business yet", create: "Create business", basic: "Basic information", name: "Business name", category: "Business category", phone: "Phone", line: "LINE (optional)", address: "Address", hours: "Opening hours", media: "Replace photos (optional)", storefront: "Storefront or workplace", menu: "Products, services or prices", product: "Featured product or work", add: "Choose a new photo", submit: "Save and submit for review", submitting: "Submitting…", submitted: "Saved on the server and submitted for review", required: "Complete all required information.", lineRequired: "Open inside LINE to continue.", failed: "Save failed. Please try again.", delete: "Delete this record", deleteConfirm: "Delete this record from the server?", deleteFailed: "Unable to delete. Published businesses must be withdrawn first.", publishedWarning: "Editing a published business sends it back to review." },
-  zh: { title: "修改商户资料", body: "已提交资料只保存在服务器；修改后会重新进入审核。", empty: "服务器中还没有商户", create: "创建商户", basic: "基础信息", name: "商户名称", category: "商户分类", phone: "联系电话", line: "LINE联系方式（选填）", address: "经营地址", hours: "营业时间", media: "更换照片（选填）", storefront: "门店或经营场所", menu: "商品、服务或价目表", product: "代表性商品或案例", add: "选择新照片", submit: "保存并重新提交审核", submitting: "正在提交…", submitted: "已保存到服务器并提交审核", required: "请填写所有必填资料", lineRequired: "请在LINE内进行操作", failed: "保存失败，请重试", delete: "删除这条记录", deleteConfirm: "从服务器删除这条记录？", deleteFailed: "无法删除；已发布商户需要先在后台撤回", publishedWarning: "修改已发布商户后，网页会暂时回到审核状态。" },
+  th: { title: "แก้ไขข้อมูลธุรกิจ", body: "ข้อมูลที่ส่งแล้วเก็บบนเซิร์ฟเวอร์ การแก้ไขจะส่งเข้าตรวจสอบอีกครั้ง", empty: "ยังไม่มีธุรกิจบนเซิร์ฟเวอร์", create: "สร้างธุรกิจ", basic: "ข้อมูลพื้นฐาน", name: "ชื่อธุรกิจ", category: "ประเภทธุรกิจ", phone: "เบอร์โทร", line: "LINE (ไม่บังคับ)", address: "ที่อยู่", hours: "เวลาเปิด", media: "เปลี่ยนรูป (ไม่บังคับ)", storefront: "หน้าร้านหรือสถานที่", menu: "สินค้า บริการ หรือราคา", product: "สินค้าหรือผลงานเด่น", add: "เลือกรูปใหม่", submit: "บันทึกและส่งตรวจสอบ", submitting: "กำลังส่ง…", submitted: "บันทึกบนเซิร์ฟเวอร์และส่งตรวจสอบแล้ว", required: "กรุณากรอกข้อมูลที่จำเป็นให้ครบ", lineRequired: "กรุณาเข้าสู่ระบบ", failed: "บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง", delete: "ลบข้อมูลนี้", deleteConfirm: "ลบข้อมูลนี้จากเซิร์ฟเวอร์หรือไม่?", deleteFailed: "ลบไม่ได้ ธุรกิจที่เผยแพร่แล้วต้องถอนก่อน", publishedWarning: "การแก้ไขธุรกิจที่เผยแพร่แล้วจะกลับเข้าสู่การตรวจสอบ" },
+  en: { title: "Edit business information", body: "Submitted information is stored on the server. Changes are sent for review again.", empty: "No server business yet", create: "Create business", basic: "Basic information", name: "Business name", category: "Business category", phone: "Phone", line: "LINE (optional)", address: "Address", hours: "Opening hours", media: "Replace photos (optional)", storefront: "Storefront or workplace", menu: "Products, services or prices", product: "Featured product or work", add: "Choose a new photo", submit: "Save and submit for review", submitting: "Submitting…", submitted: "Saved on the server and submitted for review", required: "Complete all required information.", lineRequired: "Sign in to your account to continue.", failed: "Save failed. Please try again.", delete: "Delete this record", deleteConfirm: "Delete this record from the server?", deleteFailed: "Unable to delete. Published businesses must be withdrawn first.", publishedWarning: "Editing a published business sends it back to review." },
+  zh: { title: "修改商户资料", body: "已提交资料只保存在服务器；修改后会重新进入审核。", empty: "服务器中还没有商户", create: "创建商户", basic: "基础信息", name: "商户名称", category: "商户分类", phone: "联系电话", line: "LINE联系方式（选填）", address: "经营地址", hours: "营业时间", media: "更换照片（选填）", storefront: "门店或经营场所", menu: "商品、服务或价目表", product: "代表性商品或案例", add: "选择新照片", submit: "保存并重新提交审核", submitting: "正在提交…", submitted: "已保存到服务器并提交审核", required: "请填写所有必填资料", lineRequired: "请重新登录网站", failed: "保存失败，请重试", delete: "删除这条记录", deleteConfirm: "从服务器删除这条记录？", deleteFailed: "无法删除；已发布商户需要先在后台撤回", publishedWarning: "修改已发布商户后，网页会暂时回到审核状态。" },
 };
 
 const feedback = {
-  th: { compressing: "กำลังเตรียมรูป…", ready: "เตรียมรูปแล้ว กดบันทึกเพื่ออัปโหลด", tooLarge: "รูปมีขนาดใหญ่เกินไป กรุณาเลือกรูปอื่น", forbidden: "เซสชันนี้ไม่สามารถส่งคำขอได้ กรุณาเปิดใหม่ใน LINE", missing: "ไม่พบข้อมูลธุรกิจนี้ กรุณาซิงค์อีกครั้ง" },
-  en: { compressing: "Preparing photo…", ready: "Photo is ready. Tap save to upload it.", tooLarge: "The photo is too large. Choose a different image.", forbidden: "This session cannot submit changes. Reopen the app in LINE.", missing: "This business record was not found. Sync again." },
-  zh: { compressing: "正在压缩照片…", ready: "照片已经准备好，点击保存后上传", tooLarge: "照片仍然过大，请换一张照片", forbidden: "当前会话不能提交修改，请从LINE重新打开", missing: "服务器找不到这条商户资料，请重新同步" },
+  th: { compressing: "กำลังเตรียมรูป…", ready: "เตรียมรูปแล้ว กดบันทึกเพื่ออัปโหลด", tooLarge: "รูปมีขนาดใหญ่เกินไป กรุณาเลือกรูปอื่น", forbidden: "เซสชันนี้ไม่สามารถส่งคำขอได้ กรุณาเข้าสู่ระบบอีกครั้ง", missing: "ไม่พบข้อมูลธุรกิจนี้ กรุณาซิงค์อีกครั้ง" },
+  en: { compressing: "Preparing photo…", ready: "Photo is ready. Tap save to upload it.", tooLarge: "The photo is too large. Choose a different image.", forbidden: "This session cannot submit changes. Sign in again.", missing: "This business record was not found. Sync again." },
+  zh: { compressing: "正在压缩照片…", ready: "照片已经准备好，点击保存后上传", tooLarge: "照片仍然过大，请换一张照片", forbidden: "当前会话不能提交修改，请重新登录网站", missing: "服务器找不到这条商户资料，请重新同步" },
 };
 
 export function ProfileForm({ locale }: { locale: Locale }) {
   const router = useRouter();
   const t = ui[locale];
   const { draft, merchants, hydrated, updateMerchant, deleteMerchant } = useMerchantDraft();
-  const { idToken, isInClient, isLoggedIn } = useLiff();
+  const { user } = useAccount();
   const [form, setForm] = useState<MerchantDraft>(draft);
   const [busy, setBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
@@ -56,10 +56,10 @@ export function ProfileForm({ locale }: { locale: Locale }) {
     if (!form.name[locale].trim() || !form.category[locale].trim() || !form.address[locale].trim() || !form.phone.trim() || !form.hours.trim()) {
       setNotice(t.required); return;
     }
-    if (!isInClient || !isLoggedIn || !idToken) { setNotice(t.lineRequired); return; }
+    if (!user) { setNotice(t.lineRequired); return; }
     setBusy(true);
     try {
-      const updated = await updateMerchant(form, locale, idToken);
+      const updated = await updateMerchant(form, locale);
       setForm(updated);
       setNotice(t.submitted);
       navigator.vibrate?.(35);

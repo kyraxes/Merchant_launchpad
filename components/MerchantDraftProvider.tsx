@@ -8,15 +8,14 @@ import {
 } from "@/lib/merchant-draft";
 import type { Locale } from "@/lib/types";
 import type { PublicMerchantSubmission } from "@/lib/submissions";
-import { useLiff } from "@/components/LiffProvider";
+import { useAccount } from "@/components/AccountProvider";
 
 const emptyWorkspace: MerchantWorkspace = { version: 2, selectedId: "", merchants: [], events: [] };
 const imageKinds = ["storefront", "menu", "product"] as const;
 
-async function loadOwnerImages(merchantId: string, token: string) {
+async function loadOwnerImages(merchantId: string) {
   const entries = await Promise.all(imageKinds.map(async (kind) => {
     const response = await fetch(`/api/submissions/${merchantId}/images/${kind}`, {
-      headers: { authorization: `Bearer ${token}` },
       cache: "no-store",
     });
     if (!response.ok) return [kind, null] as const;
@@ -64,8 +63,8 @@ type MerchantDraftContextValue = {
   hydrated: boolean;
   syncState: "idle" | "syncing" | "synced" | "error";
   syncServer: () => Promise<void>;
-  submitMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<string>;
-  updateMerchant: (next: MerchantDraft, locale: Locale, idToken: string) => Promise<MerchantDraft>;
+  submitMerchant: (next: MerchantDraft, locale: Locale) => Promise<string>;
+  updateMerchant: (next: MerchantDraft, locale: Locale) => Promise<MerchantDraft>;
   selectMerchant: (id: string) => Promise<void>;
   deleteMerchant: (id: string) => Promise<void>;
 };
@@ -73,7 +72,8 @@ type MerchantDraftContextValue = {
 const MerchantDraftContext = createContext<MerchantDraftContextValue | null>(null);
 
 export function MerchantDraftProvider({ children }: { children: React.ReactNode }) {
-  const { status: lineStatus, isInClient, isLoggedIn, idToken } = useLiff();
+  const { status: lineStatus, user } = useAccount();
+  const accountId = user?.id;
   const emptyDraftRef = useRef(createEmptyMerchantDraft("unsubmitted", "th"));
   const [workspace, setWorkspace] = useState(emptyWorkspace);
   const [hydrated, setHydrated] = useState(false);
@@ -92,10 +92,10 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const syncServer = useCallback(async () => {
-    if (lineStatus !== "ready" || !isInClient || !isLoggedIn || !idToken) throw new Error("LINE_TOKEN_REQUIRED");
+    if (lineStatus !== "ready" || !accountId) throw new Error("LINE_TOKEN_REQUIRED");
     setSyncState("syncing");
     try {
-      const response = await fetch("/api/submissions", { headers: { authorization: `Bearer ${idToken}` }, cache: "no-store" });
+      const response = await fetch("/api/submissions", { cache: "no-store" });
       const payload = await response.json() as { submissions?: PublicMerchantSubmission[] };
       if (!response.ok || !payload.submissions) throw new Error("SYNC_FAILED");
       const merchants = payload.submissions.map(submissionToDraft);
@@ -103,27 +103,27 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
         ? workspaceRef.current.selectedId
         : merchants[0]?.id || "";
       const selected = merchants.find((item) => item.id === selectedId);
-      if (selected) selected.images = await loadOwnerImages(selected.id, idToken);
+      if (selected) selected.images = await loadOwnerImages(selected.id);
       updateWorkspace({ version: 2, selectedId, merchants, events: workspaceRef.current.events });
       setSyncState("synced");
     } catch {
       setSyncState("error");
       throw new Error("SYNC_FAILED");
     }
-  }, [idToken, isInClient, isLoggedIn, lineStatus, updateWorkspace]);
+  }, [accountId, lineStatus, updateWorkspace]);
 
   useEffect(() => {
     if (lineStatus === "loading") return;
-    if (lineStatus === "ready" && isInClient && isLoggedIn && idToken) {
+    if (lineStatus === "ready" && accountId) {
+      setHydrated(false);
       updateWorkspace(emptyWorkspace);
       void syncServer().catch(() => undefined).finally(() => setHydrated(true));
     } else {
-      // A normal browser has no verified LINE owner identity, so it must not
-      // invent a second, device-local merchant list.
+      // Signed-out browsers must not retain the previous account’s merchant list.
       updateWorkspace(emptyWorkspace);
       setHydrated(true);
     }
-  }, [idToken, isInClient, isLoggedIn, lineStatus, syncServer, updateWorkspace]);
+  }, [accountId, lineStatus, syncServer, updateWorkspace]);
 
   const value = useMemo<MerchantDraftContextValue>(() => ({
     draft: workspace.merchants.find((item) => item.id === workspace.selectedId) || workspace.merchants[0] || emptyDraftRef.current,
@@ -131,10 +131,10 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
     hydrated,
     syncState,
     syncServer,
-    submitMerchant: async (draft, locale, token) => {
+    submitMerchant: async (draft, locale) => {
       const response = await fetch("/api/submissions", {
         method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(submissionBody(draft, locale)),
       });
       const payload = await response.json() as { submission?: PublicMerchantSubmission; error?: string };
@@ -144,10 +144,10 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       updateWorkspace({ ...current, selectedId: submitted.id, merchants: [submitted, ...current.merchants.filter((item) => item.id !== submitted.id)] });
       return submitted.id;
     },
-    updateMerchant: async (draft, locale, token) => {
+    updateMerchant: async (draft, locale) => {
       const response = await fetch(`/api/submissions/${draft.id}`, {
         method: "PATCH",
-        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify(submissionBody(draft, locale)),
       });
       const payload = await response.json() as { submission?: PublicMerchantSubmission; error?: string };
@@ -161,13 +161,13 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const current = workspaceRef.current;
       const selected = current.merchants.find((item) => item.id === id);
       if (!selected) return;
-      const images = Object.values(selected.images).some(Boolean) ? selected.images : await loadOwnerImages(id, idToken || "");
+      const images = Object.values(selected.images).some(Boolean) ? selected.images : await loadOwnerImages(id);
       updateWorkspace({ ...current, selectedId: id, merchants: current.merchants.map((item) => item.id === id ? { ...item, images } : item) });
     },
     deleteMerchant: async (id) => {
       if (/^[a-f0-9]{24}$/.test(id)) {
-        if (!idToken) throw new Error("LINE_TOKEN_REQUIRED");
-        const response = await fetch(`/api/submissions/${id}`, { method: "DELETE", headers: { authorization: `Bearer ${idToken}` } });
+        if (!accountId) throw new Error("LINE_TOKEN_REQUIRED");
+        const response = await fetch(`/api/submissions/${id}`, { method: "DELETE" });
         if (!response.ok) {
           const payload = await response.json() as { error?: string };
           throw new Error(payload.error || "DELETE_FAILED");
@@ -177,7 +177,7 @@ export function MerchantDraftProvider({ children }: { children: React.ReactNode 
       const remaining = current.merchants.filter((item) => item.id !== id);
       updateWorkspace({ ...current, selectedId: remaining[0]?.id || "", merchants: remaining });
     },
-  }), [hydrated, idToken, syncServer, syncState, updateWorkspace, workspace]);
+  }), [hydrated, accountId, syncServer, syncState, updateWorkspace, workspace]);
 
   return <MerchantDraftContext.Provider value={value}>{children}</MerchantDraftContext.Provider>;
 }

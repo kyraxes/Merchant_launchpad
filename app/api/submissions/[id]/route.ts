@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { verifyLineIdToken } from "@/lib/server/line-auth";
+import { verifyMerchantIdentity } from "@/lib/server/account-auth";
 import { deleteSubmission, getSubmission, updateSubmission, updateSubmissionImages } from "@/lib/server/submission-store";
 import { parseSubmissionInput, publicSubmission } from "@/lib/submissions";
 import { requireSameOrigin } from "@/lib/server/request-security";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     requireSameOrigin(request);
-    const identity = await verifyLineIdToken(request.headers.get("authorization"));
+    const identity = await verifyMerchantIdentity(request);
     const { id } = await params;
     if (!/^[a-f0-9]{24}$/.test(id)) return NextResponse.json({ error: "INVALID_SUBMISSION_ID" }, { status: 400 });
     const submission = await getSubmission(id);
@@ -30,7 +30,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     requireSameOrigin(request);
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > 5_000_000) return NextResponse.json({ error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
-    const identity = await verifyLineIdToken(request.headers.get("authorization"));
+    const identity = await verifyMerchantIdentity(request);
     const { id } = await params;
     if (!/^[a-f0-9]{24}$/.test(id)) return NextResponse.json({ error: "INVALID_SUBMISSION_ID" }, { status: 400 });
     const existing = await getSubmission(id);

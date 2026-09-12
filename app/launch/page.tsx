@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LaunchAccess } from "@/components/LaunchAccess";
 
 export const metadata: Metadata = {
-  title: "Open in LINE",
+  title: "Open website",
   robots: { index: false, follow: false },
 };
 

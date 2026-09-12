@@ -1,4 +1,4 @@
-export function compressImage(file: File): Promise<string> {
+export function compressImage(file: File, forMenu = false): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Unable to read image"));
@@ -20,10 +20,11 @@ export function compressImage(file: File): Promise<string> {
         }
 
         try {
-          let output = render(960, 0.68);
-          if (output.length > 1_200_000) output = render(800, 0.56);
-          if (output.length > 1_200_000) output = render(640, 0.48);
-          if (output.length > 1_600_000) throw new Error("Image remains too large");
+          const target = forMenu ? 680_000 : 1_200_000;
+          let output = render(forMenu ? 1600 : 960, forMenu ? 0.82 : 0.68);
+          if (output.length > target) output = render(forMenu ? 1200 : 800, 0.56);
+          if (output.length > target) output = render(forMenu ? 960 : 640, 0.48);
+          if (output.length > (forMenu ? 700_000 : 1_600_000)) throw new Error("Image remains too large");
           resolve(output);
         } catch (error) {
           reject(error);

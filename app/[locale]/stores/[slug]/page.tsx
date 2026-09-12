@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { getMerchant, merchants } from "@/data/merchants";
 import { copy, isLocale, locales } from "@/lib/i18n";
-import { getSubmission } from "@/lib/server/submission-store";
+import { getMenu, getSubmission } from "@/lib/server/submission-store";
 import { googleMapsAddressUrl, googleMapsSearchUrl, merchantUrl, mockMode } from "@/lib/site";
 
 type PageProps = { params: Promise<{ locale: string; slug: string }> };
@@ -79,6 +79,7 @@ const publishedCopy = {
 
 async function ApprovedMerchantPage({ locale, submission }: { locale: "th" | "en" | "zh"; submission: NonNullable<Awaited<ReturnType<typeof getApprovedSubmission>>> }) {
   const t = publishedCopy[locale];
+  const { published: publishedMenu } = await getMenu(submission.id);
   const mapUrl = googleMapsAddressUrl(submission.name, submission.address);
   const imageUrl = (kind: "storefront" | "menu" | "product") => `/api/public/merchants/${submission.id}/images/${kind}`;
   const jsonLd = {
@@ -100,6 +101,7 @@ async function ApprovedMerchantPage({ locale, submission }: { locale: "th" | "en
         <div className="public-intro"><p className="eyebrow">{t.about}</p><h1>{submission.name}</h1><h2>{submission.category}</h2><p>{t.notice}</p><div className="button-row"><a className="primary-button" href={mapUrl} target="_blank" rel="noreferrer"><Icon name="map" size={17}/>{t.map}</a><a className="secondary-button" href={`tel:${submission.phone.replace(/\s/g,"")}`}><Icon name="phone" size={17}/>{t.call}</a></div></div>
       </section>
       <section className="public-facts"><article><Icon name="clock"/><div><strong>{t.hours}</strong><span>{submission.hours}</span></div></article><article><Icon name="pin"/><div><strong>{t.location}</strong><span>{submission.address}</span></div></article><article><Icon name="phone"/><div><strong>{t.contact}</strong><span>{submission.phone}{submission.lineId ? ` · LINE ${submission.lineId}` : ""}</span></div></article></section>
+      {publishedMenu && <section className="form-card"><Link className="primary-button" href={`/${locale}/stores/${submission.id}/menu`}>{locale === "zh" ? "查看线上菜单" : locale === "th" ? "ดูเมนูออนไลน์" : "View online menu"}<Icon name="arrow"/></Link></section>}
       {(submission.imageKeys.menu || submission.imageKeys.product) && <section className="public-menu"><div className="public-section-title"><p className="eyebrow">{submission.category}</p><h2>{t.gallery}</h2></div><div className="public-business-gallery">{submission.imageKeys.menu && <img src={imageUrl("menu")} alt={t.gallery}/>} {submission.imageKeys.product && <img src={imageUrl("product")} alt={t.gallery}/>}</div></section>}
       {mockMode && <aside className="mock-bar">Pilot mode · Search engine indexing is currently disabled</aside>}
     </main>

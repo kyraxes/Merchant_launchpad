@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { parseSubmissionInput, publicSubmission, type MerchantSubmission } from "@/lib/submissions";
-import { verifyLineIdToken } from "@/lib/server/line-auth";
+import { getAccount, reserveAccountOwner, verifyMerchantIdentity } from "@/lib/server/account-auth";
 import { createSubmission, listSubmissions } from "@/lib/server/submission-store";
 import { requireSameOrigin } from "@/lib/server/request-security";
 
@@ -29,8 +29,10 @@ export async function POST(request: Request) {
     requireSameOrigin(request);
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > 5_000_000) return NextResponse.json({ error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
-    const identity = await verifyLineIdToken(request.headers.get("authorization"));
+    const identity = await verifyMerchantIdentity(request);
     const input = parseSubmissionInput(await request.json());
+    const account = await getAccount(request);
+    if (account) await reserveAccountOwner(account.id, identity.userId);
     const existingSubmissions = await listSubmissions();
     const ownedSubmissions = existingSubmissions.filter((item) => item.ownerLineUserId === identity.userId);
     const duplicateStore = ownedSubmissions.find((item) => item.clientSubmissionId === input.clientSubmissionId || (
@@ -82,7 +84,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const identity = await verifyLineIdToken(request.headers.get("authorization"));
+    const identity = await verifyMerchantIdentity(request);
     const submissions = (await listSubmissions())
       .filter((item) => item.ownerLineUserId === identity.userId)
       .map(publicSubmission);

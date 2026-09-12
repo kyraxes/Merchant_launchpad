@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { verifyLineIdToken } from "@/lib/server/line-auth";
+import { verifyMerchantIdentity } from "@/lib/server/account-auth";
 import { getSubmission, getSubmissionImage } from "@/lib/server/submission-store";
 
 export const runtime = "nodejs";
@@ -9,7 +9,7 @@ const kinds = ["storefront", "menu", "product"] as const;
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string; kind: string }> }) {
   try {
-    const identity = await verifyLineIdToken(request.headers.get("authorization"));
+    const identity = await verifyMerchantIdentity(request);
     const { id, kind } = await params;
     if (!/^[a-f0-9]{24}$/.test(id) || !kinds.includes(kind as typeof kinds[number])) {
       return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });

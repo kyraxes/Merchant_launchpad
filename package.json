@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:menu": "node tests/menu-flow.mjs"
   },
   "dependencies": {
     "@line/liff": "^2.31.0",
